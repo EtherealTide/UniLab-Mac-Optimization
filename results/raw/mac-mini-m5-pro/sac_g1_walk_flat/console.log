@@ -1,0 +1,67 @@
+/Users/liangyu/unilab-mac-benchmark/UniLab/src/unilab/base/entity.py:990: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at /Users/runner/work/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:219.)
+  else torch.from_numpy(np.ascontiguousarray(source)).to(
+TensorBoard logging to:
+/Users/liangyu/unilab-mac-benchmark/results/mac-mini-m5-pro/sac_g1_walk_flat
+W1012 18:27:41.914000 11586 torch/_inductor/utils.py:1806] [1/0] Not enough SMs to use max_autotune_gemm mode
+/Users/liangyu/unilab-mac-benchmark/UniLab/src/unilab/base/entity.py:1006: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at /Users/runner/work/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:219.)
+  else torch.from_numpy(np.ascontiguousarray(source)).to(
+╭─  🚀 UniLab Off-Policy Training | SAC | G1WalkFlat | GPUs 1 | iter 500/500  ─╮
+│ ⏱ 2m30s | ETA 0s | Ep Len 60.1 | Steps/s 10,211 | Rows/s 326,746 | Avg 2s (… │
+│                                                                              │
+│ Metrics                                                                Value │
+│ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │
+│ Actor                                                                 -6.063 │
+│ Critic                                                                 3.709 │
+│ Entropy                                                               -4.335 │
+│ Temperature                                                          -0.0123 │
+│ Temperature                                                           0.0029 │
+│   Actor Grad Norm                                                          0 │
+│   Critic Grad Norm                                                         0 │
+│   Target Q Max                                                         9.526 │
+│   Target Q Min                                                       -0.1787 │
+│   Ingress Backpressure                                                     0 │
+│   Ingress Depth                                                        2.000 │
+│   Ingress Drops                                                            0 │
+│   Ingress High Water                                                   1.000 │
+│   Ingress Occupancy                                                    1.000 │
+│                                                                              │
+│ Rewards (iter 500)                                                     Value │
+│ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │
+│ Reward ━                                            Mean 15.497 / Peak 16.84 │
+│   alive                                                             +10.0000 │
+│   feet phase                                                         +4.1924 │
+│   penalty action rate                                                -1.0558 │
+│   penalty ang vel xy                                                 -0.1885 │
+│   penalty feet ori                                                   -0.1610 │
+│   penalty orientation                                                -0.0958 │
+│   pose                                                               -0.8279 │
+│   tracking ang vel                                                   +0.3077 │
+│   tracking lin vel                                                   +0.5747 │
+│                                                                              │
+│ Timing                                                                 Value │
+│ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │
+│ Collector Wait                                                   4.5ms    2% │
+│ Inference                                                        1.5ms    1% │
+│ Collector Release                                                0.0ms    0% │
+│ Replay Batch Wait                                                0.0ms    0% │
+│ Replay Sample                                                    0.0ms    0% │
+│ Learning                                                       191.7ms   96% │
+│ Other                                                            2.8ms    1% │
+│ Iter Wall                                                      200.6ms  100% │
+│ Learner Action Wait                                            172.8ms   86% │
+│ Env Step                                                        27.7ms   14% │
+│   Backend Step                                                 21.3ms  11%─┤ │
+│   Update State                                                  3.3ms   2%─┤ │
+│   Reset Done                                                    2.5ms   1%─┘ │
+│ Replay Write                                                     0.3ms    0% │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭────────────────────────────── Training Summary ──────────────────────────────╮
+│ Training complete                                                            │
+│   Algo: SAC | Env: G1WalkFlat                                                │
+│   Iterations: 500/500                                                        │
+│   Total time: 2m30s                                                          │
+│   Total env steps: 1,044,480                                                 │
+│   Last checkpoint:                                                           │
+│ /Users/liangyu/unilab-mac-benchmark/results/mac-mini-m5-pro/sac_g1_walk_flat │
+│ /model_500.pt                                                                │
+╰──────────────────────────────────────────────────────────────────────────────╯

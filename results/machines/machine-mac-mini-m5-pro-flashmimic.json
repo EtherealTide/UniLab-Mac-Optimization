@@ -1,0 +1,90 @@
+{
+  "captured_at_utc": "2026-10-12T10:23:01.445831+00:00",
+  "cpu": {
+    "brand": "Apple M5 Pro",
+    "logical_cores": "18",
+    "memory_bytes": "68719476736",
+    "physical_cores": "18"
+  },
+  "displays": {
+    "SPDisplaysDataType": [
+      {
+        "_name": "Apple M5 Pro",
+        "spdisplays_mtlgpufamilysupport": "spdisplays_metal4",
+        "spdisplays_ndrvs": [
+          {
+            "_name": "VX2731-4K-HD",
+            "_spdisplays_display-product-id": "3a23",
+            "_spdisplays_display-vendor-id": "5a63",
+            "_spdisplays_display-week": "23",
+            "_spdisplays_display-year": "2022",
+            "_spdisplays_displayID": "2",
+            "_spdisplays_pixels": "3840 x 2160",
+            "_spdisplays_resolution": "1920 x 1080 @ 60.00Hz",
+            "spdisplays_main": "spdisplays_yes",
+            "spdisplays_mirror": "spdisplays_off",
+            "spdisplays_online": "spdisplays_yes",
+            "spdisplays_pixelresolution": "spdisplays_2160p",
+            "spdisplays_resolution": "1920 x 1080 @ 60.00Hz",
+            "spdisplays_rotation": "spdisplays_supported"
+          }
+        ],
+        "spdisplays_vendor": "sppci_vendor_Apple",
+        "sppci_bus": "spdisplays_builtin",
+        "sppci_cores": "20",
+        "sppci_device_type": "spdisplays_gpu",
+        "sppci_model": "Apple M5 Pro"
+      }
+    ]
+  },
+  "environment": {
+    "HF_ENDPOINT": null,
+    "PYTORCH_ENABLE_MPS_FALLBACK": null
+  },
+  "git": {
+    "dirty": false,
+    "head": "e0a2b5c10f1b3815de0b830f5c035ae24e95171e"
+  },
+  "hardware": {
+    "SPHardwareDataType": [
+      {
+        "_name": "hardware_overview",
+        "activation_lock_status": "activation_lock_disabled",
+        "boot_rom_version": "20457.1.29",
+        "chip_type": "Apple M5 Pro",
+        "machine_model": "Mac17,16",
+        "machine_name": "Mac mini",
+        "model_number": "MHQU4CH/A",
+        "number_processors": "proc 18:6:12:0",
+        "os_loader_version": "20457.1.29",
+        "physical_memory": "64 GB"
+      }
+    ]
+  },
+  "hostname": "liangyudeMini.lan",
+  "machine": "arm64",
+  "macos": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0.1\nBuildVersion:\t\t26A434",
+  "packages": {
+    "flashmimic": "0.1.0",
+    "hydra-core": "1.3.7",
+    "mjbatch-uni": "0.2.5",
+    "mujoco": "3.11.0",
+    "numpy": "2.5.3",
+    "tensorboard": "2.21.0",
+    "torch": "2.14.1",
+    "unilab": "1.3.4",
+    "unilab-rl": "1.4.11",
+    "unisim-core": "1.7.15"
+  },
+  "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+  "python": "3.13.15",
+  "toolchain": {
+    "clang": "Apple clang version 21.0.0 (clang-2100.3.34.2)\nTarget: arm64-apple-darwin27.0.0\nThread model: posix\nInstalledDir: /Library/Developer/CommandLineTools/usr/bin",
+    "git": "git version 2.54.0 (Apple Git-157)",
+    "uv": "uv 0.12.21 (7af826859 2026-09-29 aarch64-apple-darwin)"
+  },
+  "torch": {
+    "mps_available": true,
+    "mps_built": true
+  }
+}

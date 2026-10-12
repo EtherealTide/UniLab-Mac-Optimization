@@ -1,0 +1,74 @@
+/Users/liangyu/unilab-mac-benchmark/UniLab/src/unilab/base/entity.py:990: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at /Users/runner/work/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:219.)
+  else torch.from_numpy(np.ascontiguousarray(source)).to(
+TensorBoard logging to:
+/Users/liangyu/unilab-mac-benchmark/results/mac-mini-m5-pro/flashsac_g1_motion_t
+racking
+W1012 18:30:25.250000 11629 torch/_inductor/utils.py:1806] [6/0] Not enough SMs to use max_autotune_gemm mode
+W1012 18:30:26.120000 11629 torch/_inductor/cudagraph_utils.py:401] [6/0] [__cudagraphs] skipping cudagraphs due to skipping cudagraphs due to multiple devices: device(type='mps', index=0)
+W1012 18:30:27.873000 11629 torch/_inductor/cudagraph_utils.py:401] [7/0] [__cudagraphs] skipping cudagraphs due to skipping cudagraphs due to multiple devices: device(type='mps', index=0)
+/Users/liangyu/unilab-mac-benchmark/UniLab/src/unilab/base/entity.py:1006: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at /Users/runner/work/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:219.)
+  else torch.from_numpy(np.ascontiguousarray(source)).to(
+W1012 18:30:46.443000 11658 torch/_dynamo/convert_frame.py:2008] [4/8] torch._dynamo hit config.recompile_limit (8)
+W1012 18:30:46.443000 11658 torch/_dynamo/convert_frame.py:2008] [4/8]    function: '_motion_reset_values_kernel' (/Users/liangyu/unilab-mac-benchmark/UniLab/src/unilab/tasks/motion_tracking/common/manager_terms.py:205)
+W1012 18:30:46.443000 11658 torch/_dynamo/convert_frame.py:2008] [4/8]    last reason: 4/7: tensor 'pose' size mismatch at index 0. expected 30, actual 45
+W1012 18:30:46.443000 11658 torch/_dynamo/convert_frame.py:2008] [4/8] To log all recompilation reasons, use TORCH_LOGS="recompiles".
+W1012 18:30:46.443000 11658 torch/_dynamo/convert_frame.py:2008] [4/8] To diagnose recompilation issues, see https://docs.pytorch.org/docs/main/user_guide/torch_compiler/compile/programming_model.recompilation.html
+╭─  🚀 UniLab Off-Policy Training | FlashSAC | G1MotionTracking | GPUs 1 | ite─╮
+│ ⏱ 1m11s | ETA 0s | Ep Len 32.3 | Steps/s 14,280 | Rows/s 57,119 | Avg 2s (n… │
+│                                                                              │
+│ Metrics                                                                Value │
+│ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │
+│ Actor                                                                 -1.816 │
+│ Critic                                                                 2.860 │
+│ Entropy                                                               12.248 │
+│ Temperature                                                           0.2067 │
+│ Temperature                                                           0.0079 │
+│   Reward Scale Std                                                    0.3018 │
+│   Ingress Backpressure                                                     0 │
+│   Ingress Depth                                                        2.000 │
+│   Ingress Drops                                                            0 │
+│   Ingress High Water                                                   1.000 │
+│   Ingress Occupancy                                                        0 │
+│                                                                              │
+│ Rewards (iter 500)                                                     Value │
+│ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │
+│ Reward ━                                              Mean 1.021 / Peak 1.10 │
+│   action rate l2                                                     -0.5732 │
+│   joint limit                                                        -0.0624 │
+│   motion body ang vel                                                +0.0017 │
+│   motion body lin vel                                                +0.0915 │
+│   motion body ori                                                    +0.0584 │
+│   motion body pos                                                    +1.2322 │
+│   motion global root ori                                             +0.1646 │
+│   motion global root pos                                             +0.6896 │
+│   motion joint pos                                                   +0.0000 │
+│   motion joint vel                                                   +0.0000 │
+│   undesired contacts                                                 -0.0001 │
+│                                                                              │
+│ Timing                                                                 Value │
+│ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │
+│ Collector Wait                                                   0.3ms    0% │
+│ Inference                                                        2.2ms    2% │
+│ Collector Release                                                0.0ms    0% │
+│ Replay Batch Wait                                                0.0ms    0% │
+│ Replay Sample                                                    0.0ms    0% │
+│ Learning                                                       140.6ms   98% │
+│ Other                                                            0.4ms    0% │
+│ Iter Wall                                                      143.4ms  100% │
+│ Learner Action Wait                                            114.5ms   80% │
+│ Env Step                                                        28.2ms   20% │
+│   Backend Step                                                 15.4ms  11%─┤ │
+│   Update State                                                  8.1ms   6%─┤ │
+│   Reset Done                                                    4.1ms   3%─┘ │
+│ Replay Write                                                     0.6ms    0% │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭────────────────────────────── Training Summary ──────────────────────────────╮
+│ Training complete                                                            │
+│   Algo: FlashSAC | Env: G1MotionTracking                                     │
+│   Iterations: 500/500                                                        │
+│   Total time: 1m11s                                                          │
+│   Total env steps: 1,224,704                                                 │
+│   Last checkpoint:                                                           │
+│ /Users/liangyu/unilab-mac-benchmark/results/mac-mini-m5-pro/flashsac_g1_moti │
+│ on_tracking/model_500.pt                                                     │
+╰──────────────────────────────────────────────────────────────────────────────╯

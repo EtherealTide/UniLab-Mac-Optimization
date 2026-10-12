@@ -1,0 +1,93 @@
+/Users/liangyu/unilab-mac-benchmark/FlashMimic/.venv/lib/python3.13/site-packages/unilab/managers/observation_manager.py:934: UserWarning: Applied torque observation read the host sensor view because the scene tensor read plan is not compiled yet
+  initial_obs = term_cfg.func(self._env, **term_cfg.params)
+/Users/liangyu/unilab-mac-benchmark/FlashMimic/.venv/lib/python3.13/site-packages/unilab/managers/observation_manager.py:934: UserWarning: Applied torque observation read the host sensor view because the scene tensor read plan is not compiled yet
+  initial_obs = term_cfg.func(self._env, **term_cfg.params)
+term: body_mass set to None, skipping...
+term: body_com set to None, skipping...
+term: foot_friction set to None, skipping...
+term: pd_gains_lower set to None, skipping...
+term: pd_gains_upper set to None, skipping...
+term: body_mass set to None, skipping...
+term: body_com set to None, skipping...
+term: foot_friction set to None, skipping...
+term: pd_gains_lower set to None, skipping...
+term: pd_gains_upper set to None, skipping...
+term: body_mass set to None, skipping...
+term: body_com set to None, skipping...
+term: foot_friction set to None, skipping...
+term: pd_gains_lower set to None, skipping...
+term: pd_gains_upper set to None, skipping...
+TensorBoard logging to:
+/Users/liangyu/unilab-mac-benchmark/results/mac-mini-m5-pro/flashmimic_g1_motion
+_tracking
+W1012 18:32:07.851000 11721 torch/_inductor/utils.py:1806] [6/0] Not enough SMs to use max_autotune_gemm mode
+W1012 18:32:08.407000 11721 torch/_inductor/cudagraph_utils.py:401] [6/0] [__cudagraphs] skipping cudagraphs due to skipping cudagraphs due to multiple devices: device(type='mps', index=0)
+W1012 18:32:10.751000 11721 torch/_inductor/cudagraph_utils.py:401] [7/0] [__cudagraphs] skipping cudagraphs due to skipping cudagraphs due to multiple devices: device(type='mps', index=0)
+/Users/liangyu/unilab-mac-benchmark/FlashMimic/.venv/lib/python3.13/site-packages/unilab/managers/observation_manager.py:934: UserWarning: Applied torque observation read the host sensor view because the scene tensor read plan is not compiled yet
+  initial_obs = term_cfg.func(self._env, **term_cfg.params)
+/Users/liangyu/unilab-mac-benchmark/FlashMimic/.venv/lib/python3.13/site-packages/unilab/envs/mdp/events.py:1622: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at /Users/runner/work/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:219.)
+  offset = torch.as_tensor(lower, dtype=unit.dtype, device=unit.device)
+term: body_mass set to None, skipping...
+term: body_com set to None, skipping...
+term: foot_friction set to None, skipping...
+term: pd_gains_lower set to None, skipping...
+term: pd_gains_upper set to None, skipping...
+╭─  🚀 UniLab Off-Policy Training | FlashSAC | G1MotionTracking | GPUs 1 | ite─╮
+│ ⏱ 2m21s | ETA 0s | Ep Len 36.9 | Steps/s 7,356 | Rows/s 44,135 | Avg 2s (n=… │
+│                                                                              │
+│ Metrics                                                                Value │
+│ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │
+│ Actor                                                                 -1.516 │
+│ Critic                                                                 2.589 │
+│ Entropy                                                               11.459 │
+│ Temperature                                                           0.1241 │
+│ Temperature                                                           0.0049 │
+│   Reward Scale Std                                                    0.4003 │
+│   Ingress Backpressure                                                     0 │
+│   Ingress Depth                                                        2.000 │
+│   Ingress Drops                                                            0 │
+│   Ingress High Water                                                   1.000 │
+│   Ingress Occupancy                                                        0 │
+│                                                                              │
+│ Rewards (iter 500)                                                     Value │
+│ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │
+│ Reward ━                                              Mean 1.476 / Peak 1.48 │
+│   action rate l2                                                     -0.6072 │
+│   joint limit                                                        -0.0728 │
+│   motion body ang vel                                                +0.0101 │
+│   motion body lin vel                                                +0.0974 │
+│   motion body ori                                                    +0.2650 │
+│   motion body pos                                                    +1.1783 │
+│   motion global root ori                                             +0.1226 │
+│   motion global root pos                                             +0.6245 │
+│   motion joint pos                                                   +0.3829 │
+│   motion joint vel                                                   +0.0011 │
+│   undesired contacts                                                 -0.0002 │
+│                                                                              │
+│ Timing                                                                 Value │
+│ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │
+│ Collector Wait                                                   0.2ms    0% │
+│ Inference                                                        2.4ms    1% │
+│ Collector Release                                                0.0ms    0% │
+│ Replay Batch Wait                                                0.0ms    0% │
+│ Replay Sample                                                    0.0ms    0% │
+│ Learning                                                       275.4ms   99% │
+│ Other                                                            0.4ms    0% │
+│ Iter Wall                                                      278.5ms  100% │
+│ Learner Action Wait                                            218.5ms   78% │
+│ Env Step                                                        61.4ms   22% │
+│   Backend Step                                                 15.8ms   6%─┤ │
+│   Update State                                                 29.2ms  10%─┤ │
+│   Reset Done                                                   15.6ms   6%─┘ │
+│ Replay Write                                                     1.7ms    1% │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭────────────────────────────── Training Summary ──────────────────────────────╮
+│ Training complete                                                            │
+│   Algo: FlashSAC | Env: G1MotionTracking                                     │
+│   Iterations: 500/500                                                        │
+│   Total time: 2m21s                                                          │
+│   Total env steps: 1,224,704                                                 │
+│   Last checkpoint:                                                           │
+│ /Users/liangyu/unilab-mac-benchmark/results/mac-mini-m5-pro/flashmimic_g1_mo │
+│ tion_tracking/model_500.pt                                                   │
+╰──────────────────────────────────────────────────────────────────────────────╯

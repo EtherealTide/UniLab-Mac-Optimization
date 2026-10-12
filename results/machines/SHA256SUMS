@@ -1,0 +1,8 @@
+9e77f63f19b71f15b47eb7ebab80da3b7697273060429f3495b1644dcb7ba0f4  ./machine-mac-mini-m5-pro-flashmimic.json
+c1be6ab6ce1cf55894209a8686b5ad8f0b2dff28da08ecd5b65e8b9f9087ac64  ./machine-mac-mini-m5-pro.json
+e107c4884919ea3c76ac442f0d37c03fb17e440295797b5b3fdf04e791991b93  ./machine-mac-studio-m5-ultra-flashmimic.json
+8a9f47aa2fe35188b293ada1639b617c89c0cf507404a22bf2e8e7fa643e49af  ./machine-mac-studio-m5-ultra.json
+6a6cc002894d084671eab9f703eae4e6532888bad4543d0431a232818eaf794b  ./verify-mac-mini-m5-pro-flashmimic.json
+95354627a07f792659c8337d7a8badf34fecfc68bb816ad6d07fece95fcb882b  ./verify-mac-mini-m5-pro-unilab.json
+6a6cc002894d084671eab9f703eae4e6532888bad4543d0431a232818eaf794b  ./verify-mac-studio-m5-ultra-flashmimic.json
+95354627a07f792659c8337d7a8badf34fecfc68bb816ad6d07fece95fcb882b  ./verify-mac-studio-m5-ultra-unilab.json

@@ -1,0 +1,4 @@
+# id	entrypoint	algo	task	sim	iterations
+sac_g1_walk_flat	unilab	sac	g1_walk_flat	mujoco	500
+flashsac_g1_motion_tracking	unilab	flashsac	g1_motion_tracking	mujoco	500
+flashmimic_g1_motion_tracking	flashmimic	flashsac	g1_flash_mimic	mujoco	500

@@ -1,0 +1,66 @@
+/Users/robot/unilab-mac-benchmark/UniLab/src/unilab/base/entity.py:990: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at /Users/runner/work/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:219.)
+  else torch.from_numpy(np.ascontiguousarray(source)).to(
+TensorBoard logging to:
+/Users/robot/unilab-mac-benchmark/results/mac-studio-m5-ultra/sac_g1_walk_flat
+/Users/robot/unilab-mac-benchmark/UniLab/src/unilab/base/entity.py:1006: UserWarning: The given NumPy array is not writable, and PyTorch does not support non-writable tensors. This means writing to this tensor will result in undefined behavior. You may want to copy the array to protect its data or make it writable before converting it to a tensor. This type of warning will be suppressed for the rest of this program. (Triggered internally at /Users/runner/work/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:219.)
+  else torch.from_numpy(np.ascontiguousarray(source)).to(
+╭─  🚀 UniLab Off-Policy Training | SAC | G1WalkFlat | GPUs 1 | iter 500/500  ─╮
+│ ⏱ 41s | ETA 0s | Ep Len 58.1 | Steps/s 25,596 | Rows/s 819,059 | Avg 2s (n=… │
+│                                                                              │
+│ Metrics                                                                Value │
+│ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │
+│ Actor                                                                 -6.120 │
+│ Critic                                                                 3.815 │
+│ Entropy                                                               -6.632 │
+│ Temperature                                                          -0.0187 │
+│ Temperature                                                           0.0029 │
+│   Actor Grad Norm                                                          0 │
+│   Critic Grad Norm                                                         0 │
+│   Target Q Max                                                         9.526 │
+│   Target Q Min                                                        0.0203 │
+│   Ingress Backpressure                                                     0 │
+│   Ingress Depth                                                        2.000 │
+│   Ingress Drops                                                            0 │
+│   Ingress High Water                                                   1.000 │
+│   Ingress Occupancy                                                    1.000 │
+│                                                                              │
+│ Rewards (iter 500)                                                     Value │
+│ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │
+│ Reward ━                                            Mean 15.168 / Peak 16.77 │
+│   alive                                                             +10.0000 │
+│   feet phase                                                         +4.1098 │
+│   penalty action rate                                                -0.8998 │
+│   penalty ang vel xy                                                 -0.1484 │
+│   penalty feet ori                                                   -0.1723 │
+│   penalty orientation                                                -0.0859 │
+│   pose                                                               -0.6881 │
+│   tracking ang vel                                                   +0.3774 │
+│   tracking lin vel                                                   +0.5991 │
+│                                                                              │
+│ Timing                                                                 Value │
+│ ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ │
+│ Collector Wait                                                   0.7ms    1% │
+│ Inference                                                        1.4ms    2% │
+│ Collector Release                                                0.0ms    0% │
+│ Replay Batch Wait                                                0.0ms    0% │
+│ Replay Sample                                                    0.0ms    0% │
+│ Learning                                                        77.9ms   97% │
+│ Other                                                            0.0ms    0% │
+│ Iter Wall                                                       80.0ms  100% │
+│ Learner Action Wait                                             63.2ms   79% │
+│ Env Step                                                        16.4ms   21% │
+│   Backend Step                                                  9.9ms  12%─┤ │
+│   Update State                                                  3.2ms   4%─┤ │
+│   Reset Done                                                    2.4ms   3%─┘ │
+│ Replay Write                                                     0.3ms    0% │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭────────────────────────────── Training Summary ──────────────────────────────╮
+│ Training complete                                                            │
+│   Algo: SAC | Env: G1WalkFlat                                                │
+│   Iterations: 500/500                                                        │
+│   Total time: 41s                                                            │
+│   Total env steps: 1,044,480                                                 │
+│   Last checkpoint:                                                           │
+│ /Users/robot/unilab-mac-benchmark/results/mac-studio-m5-ultra/sac_g1_walk_fl │
+│ at/model_500.pt                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯

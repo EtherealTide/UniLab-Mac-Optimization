@@ -1,0 +1,90 @@
+{
+  "captured_at_utc": "2026-10-12T09:47:51.933549+00:00",
+  "cpu": {
+    "brand": "Apple M5 Ultra",
+    "logical_cores": "36",
+    "memory_bytes": "103079215104",
+    "physical_cores": "36"
+  },
+  "displays": {
+    "SPDisplaysDataType": [
+      {
+        "_name": "Apple M5 Ultra",
+        "spdisplays_mtlgpufamilysupport": "spdisplays_metal4",
+        "spdisplays_ndrvs": [
+          {
+            "_name": "spdisplays_display",
+            "_spdisplays_display-product-id": "76697274",
+            "_spdisplays_display-vendor-id": "756e6b6e",
+            "_spdisplays_display-week": "0",
+            "_spdisplays_display-year": "0",
+            "_spdisplays_displayID": "e",
+            "_spdisplays_pixels": "1920 x 1080",
+            "_spdisplays_resolution": "1920 x 1080 @ 60.00Hz",
+            "spdisplays_main": "spdisplays_yes",
+            "spdisplays_mirror": "spdisplays_off",
+            "spdisplays_online": "spdisplays_yes",
+            "spdisplays_pixelresolution": "spdisplays_1080p",
+            "spdisplays_resolution": "1920 x 1080 @ 60.00Hz",
+            "spdisplays_rotation": "spdisplays_supported"
+          }
+        ],
+        "spdisplays_vendor": "sppci_vendor_Apple",
+        "sppci_bus": "spdisplays_builtin",
+        "sppci_cores": "80",
+        "sppci_device_type": "spdisplays_gpu",
+        "sppci_model": "Apple M5 Ultra"
+      }
+    ]
+  },
+  "environment": {
+    "HF_ENDPOINT": null,
+    "PYTORCH_ENABLE_MPS_FALLBACK": null
+  },
+  "git": {
+    "dirty": false,
+    "head": "d5aef9f740e081d835738979e9e4e852805b54c3"
+  },
+  "hardware": {
+    "SPHardwareDataType": [
+      {
+        "_name": "hardware_overview",
+        "activation_lock_status": "activation_lock_disabled",
+        "boot_rom_version": "20457.1.29",
+        "chip_type": "Apple M5 Ultra",
+        "machine_model": "Mac17,15",
+        "machine_name": "Mac Studio",
+        "model_number": "Z1U50CH/A",
+        "number_processors": "proc 36:12:24:0",
+        "os_loader_version": "20457.1.29",
+        "physical_memory": "96 GB"
+      }
+    ]
+  },
+  "hostname": "robotdeMac-Studio.local",
+  "machine": "arm64",
+  "macos": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0.1\nBuildVersion:\t\t26A434",
+  "packages": {
+    "flashmimic": null,
+    "hydra-core": "1.3.2",
+    "mjbatch-uni": "0.2.5",
+    "mujoco": "3.11.0",
+    "numpy": "2.4.4",
+    "tensorboard": "2.21.0",
+    "torch": "2.14.0",
+    "unilab": "1.3.4",
+    "unilab-rl": "1.4.11",
+    "unisim-core": "1.7.15"
+  },
+  "platform": "macOS-27.0.1-arm64-arm-64bit-Mach-O",
+  "python": "3.13.15",
+  "toolchain": {
+    "clang": "Apple clang version 21.0.0 (clang-2100.3.34.2)\nTarget: arm64-apple-darwin27.0.0\nThread model: posix\nInstalledDir: /Library/Developer/CommandLineTools/usr/bin",
+    "git": "git version 2.54.0 (Apple Git-157)",
+    "uv": "uv 0.12.5 (210d1f678 2026-08-14 aarch64-apple-darwin)"
+  },
+  "torch": {
+    "mps_available": true,
+    "mps_built": true
+  }
+}

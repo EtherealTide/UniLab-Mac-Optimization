@@ -1,0 +1,8 @@
+{
+  "experiment_id": "flashmimic_g1_motion_tracking",
+  "machine_id": "mac-studio-m5-ultra",
+  "start_time_utc": "2026-10-12T09:39:11Z",
+  "start_epoch_sec": 1791797951,
+  "seed": 1,
+  "iterations": 500
+}

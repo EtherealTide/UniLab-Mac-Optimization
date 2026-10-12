@@ -1,0 +1,200 @@
+{
+  "status": "completed",
+  "completed_iterations": 500,
+  "total_env_steps": 1224704,
+  "final_mean_reward": 1.4906783026456834,
+  "best_mean_reward": 1.4906783026456834,
+  "mean_episode_length": 36.1,
+  "last_checkpoint": "/Users/liangyu/unilab-mac-benchmark/results/mac-mini-m5-pro/flashmimic_g1_motion_tracking/model_500.pt",
+  "trace_path": null,
+  "training_wall_time_sec": 141.6637749671936,
+  "metric_schema_version": 1,
+  "runtime_manifest": {
+    "schema_version": 1,
+    "inference_owner": "learner",
+    "collector_actor": false,
+    "collector_accelerator_context": false,
+    "collector_backend_device": null,
+    "collector_torch_inference": false,
+    "collector_tensor_native": false,
+    "inference_transport": {
+      "mode": "cpu",
+      "env_device": "cpu",
+      "ring_device": "cpu",
+      "learner_device": "mps",
+      "staging_policy": "cpu_no_device_transfer"
+    },
+    "inference_ring_device": "cpu",
+    "env_public_device": "cpu",
+    "learner_device": "mps",
+    "inference_staging_policy": "cpu_no_device_transfer",
+    "inference_ring_capacity": 1,
+    "runtime_limits": {
+      "inference_ring_capacity": {
+        "configured": 1,
+        "default": 1,
+        "effective": 1,
+        "maximum": 16
+      },
+      "collector_metrics_interval": {
+        "configured": 100,
+        "default": 1,
+        "effective": 100,
+        "maximum": 10000
+      },
+      "replay_ingress_depth": {
+        "configured": 2,
+        "default": 2,
+        "effective": 2,
+        "maximum": 16
+      },
+      "replay_ingress_slot_rows": {
+        "configured": null,
+        "default": "algo.num_envs",
+        "effective": 2048,
+        "maximum": 2048
+      },
+      "learner_sampling": {
+        "configured_batch_size": 2048,
+        "configured_updates_per_step": 6,
+        "configured_rows_per_sync": 12288,
+        "default": "required owner configuration",
+        "effective_batch_size": 2048,
+        "effective_updates_per_step": 6,
+        "effective_rows_per_sync": 12288,
+        "maximum": "device-memory budget"
+      }
+    },
+    "inference_flight": {
+      "queue_depth": 1,
+      "action_backlog": 0,
+      "max_action_backlog": 0,
+      "in_flight": 1,
+      "max_in_flight": 1,
+      "wait_time_ms": 0.0,
+      "publication_lag": 1,
+      "max_publication_lag": 1
+    },
+    "inference_publication_ordering": "contiguous_ticks",
+    "inference_epoch": 0,
+    "learner_actor_reused": true,
+    "logger_owner_rank": 0,
+    "logger_cross_rank_aggregation": false,
+    "cuda_graph": {
+      "backend": "inductor",
+      "critic": true,
+      "actor": true,
+      "device_finite_optimizer_gating": false,
+      "scope": "loss_tensors",
+      "orchestration": "inductor_cuda_graph_trees"
+    },
+    "cuda_process_sharing": {
+      "configured": null,
+      "effective": null,
+      "validated": false,
+      "rank": 0,
+      "world_size": 1,
+      "learner_device": "mps",
+      "collector_device": null,
+      "learner_gpu_uuid": null,
+      "collector_gpu_uuid": null,
+      "control_pipe": null,
+      "server_pid": null
+    },
+    "replay_h2d_submitter": "gpu_resident_ingress_main_thread",
+    "replay_device_submission_thread": "learner",
+    "replay_ingress": {
+      "ingress_depth": 2,
+      "ingress_slot_rows": 2048,
+      "published_sequence": 598,
+      "release_sequence": 598,
+      "occupancy": 0,
+      "high_water_occupancy": 1,
+      "backpressure_waits": 0,
+      "backpressure_wait_s": 0.0,
+      "early_returns": 0,
+      "dropped_batches": 0,
+      "closed_returns": 0,
+      "stop_returns": 0
+    },
+    "inference_learner_scratch_device": "mps",
+    "inference_action_host_staging": true,
+    "inference_slot_bytes": 3497984,
+    "inference_publication_sync": "cpu_synchronous",
+    "collector_metrics_interval": 100,
+    "actor_owned": false,
+    "weight_sync_attached": false,
+    "torch_inference": false,
+    "cuda_context_initialized": false,
+    "tensor_native_env": true,
+    "inference_slot_device": "cpu",
+    "inference_queue_capacity": 1,
+    "inference_scheduling_policy": "sequential_transition_dependency",
+    "inference_legal_max_in_flight": 1,
+    "inference_dependency_graph": {
+      "observation_to_action": "observation[t] -> learner action[t]",
+      "action_to_transition": "action[t] -> env.step(action[t])",
+      "transition_to_next_observation": "env.step(action[t]) -> observation[t+1]",
+      "replay_write_boundary": "transition[t] -> replay ingress[t] (order-preserving)",
+      "reset_boundary": "terminal/reset rows are committed before observation[t+1]",
+      "legal_concurrent_work": "replay/metrics work may overlap only after its transition is published"
+    },
+    "shutdown": {
+      "classification": "normal_completion",
+      "owner": "learner",
+      "phase": "finalize/logger_finish",
+      "iteration": 500,
+      "coordination_tick": 597,
+      "inference_epoch": 0,
+      "exception": null,
+      "learner_coordination": {
+        "phase": "STOPPED",
+        "progress": 723
+      },
+      "inference_ring": null,
+      "replay_ingress": {
+        "ingress_depth": 2,
+        "ingress_slot_rows": 2048,
+        "published_sequence": 598,
+        "release_sequence": 598,
+        "occupancy": 0,
+        "high_water_occupancy": 1,
+        "backpressure_waits": 0,
+        "backpressure_wait_s": 0.0,
+        "early_returns": 0,
+        "dropped_batches": 0,
+        "closed_returns": 0,
+        "stop_returns": 0
+      },
+      "collector": {
+        "alive": false,
+        "exitcode": 0,
+        "signal": null,
+        "signal_name": null
+      },
+      "cleanup": {
+        "errors": []
+      }
+    }
+  },
+  "final_env_steps_per_sec": 7371.785642252596,
+  "tail_env_steps_per_sec": 7321.603447743626,
+  "tail_iteration_count": 20,
+  "final_learner_replay_rows_per_sec": 44230.713853515575,
+  "final_cycle_wall_ms": 277.81600000162143,
+  "final_inference_ms": 2.207792,
+  "final_inference_h2d_ms": 0.077584,
+  "final_inference_forward_ms": 1.486875,
+  "final_inference_d2h_ms": 0.21350000000000002,
+  "algo": "flashsac",
+  "task": "G1MotionTracking",
+  "sim_backend": "mujoco",
+  "log_dir": "/Users/liangyu/unilab-mac-benchmark/results/mac-mini-m5-pro/flashmimic_g1_motion_tracking",
+  "start_time_utc": "2026-10-12T10:32:04.453299+00:00",
+  "end_time_utc": "2026-10-12T10:34:52.452413+00:00",
+  "wall_time_sec": 167.99820999999793,
+  "wandb_run_url": null,
+  "configured_seed": 1,
+  "configured_seed_source": "algo.seed",
+  "effective_seed": 1
+}
