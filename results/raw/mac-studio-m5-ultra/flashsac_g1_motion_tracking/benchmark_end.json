@@ -1,8 +1,8 @@
 {
   "experiment_id": "flashsac_g1_motion_tracking",
   "machine_id": "mac-studio-m5-ultra",
-  "end_time_utc": "2026-10-13T04:36:07Z",
-  "end_epoch_sec": 1791866167,
-  "elapsed_sec": 51,
+  "end_time_utc": "2026-10-13T05:47:59Z",
+  "end_epoch_sec": 1791870479,
+  "elapsed_sec": 362,
   "exit_code": 0
 }

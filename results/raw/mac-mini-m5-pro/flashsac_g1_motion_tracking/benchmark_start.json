@@ -1,8 +1,8 @@
 {
   "experiment_id": "flashsac_g1_motion_tracking",
   "machine_id": "mac-mini-m5-pro",
-  "start_time_utc": "2026-10-13T04:48:52Z",
-  "start_epoch_sec": 1791866932,
+  "start_time_utc": "2026-10-13T07:05:25Z",
+  "start_epoch_sec": 1791875125,
   "seed": 1,
-  "iterations": 500
+  "iterations": 5000
 }

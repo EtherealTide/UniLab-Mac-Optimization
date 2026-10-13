@@ -165,7 +165,7 @@ Use the analogous Studio machine ID and path on that system. The smoke recipe
 uses 16 environments and three iterations to exercise asset loading, MuJoCo,
 MPS learning, logging, and finalization.
 
-### 5. Run the formal 500-iteration protocol
+### 5. Run the formal 5,000-iteration protocol
 
 Keep the Mac connected to AC power, select its high-performance power mode,
 close unrelated compute-heavy applications, and run:
@@ -181,7 +181,7 @@ MACHINE_ID=mac-studio-m5-ultra ./scripts/run_unilab_benchmarks.sh
 ```
 
 The experiment matrix is in [`config/experiments.tsv`](config/experiments.tsv).
-All runs use seed 1, the owner configuration's 2048 environments, 500 training
+All runs use seed 1, the owner configuration's 2048 environments, 5,000 training
 iterations, per-iteration TensorBoard logging, and `training.no_play=true`.
 Results are never overwritten. The scripts explicitly enable Rich's terminal
 mode while passing output through `tee`, so the panel refreshes live without a
@@ -200,7 +200,7 @@ MACHINE_ID=mac-mini-m5-pro \
   ./scripts/run_unilab_benchmarks.sh
 ```
 
-Omitting `MAX_ITERATIONS` preserves the report's canonical 500-iteration
+Omitting `MAX_ITERATIONS` preserves the report's canonical 5,000-iteration
 protocol. The older `ITERATIONS_OVERRIDE` name remains accepted for backward
 compatibility. To run one row only:
 
@@ -272,6 +272,12 @@ last iteration's rate. `Perf/iteration_time` is recorded after MPS
 synchronization. End-to-end wrapper wall time remains a separate result that
 includes startup, warm-up, compilation, logging, checkpointing, and shutdown.
 
+Some long runs can contain an iteration whose logical environment-step counter
+does not advance. The analyzer counts that iteration's positive
+`Perf/iteration_time` in the denominator and uses a zero step delta in the
+numerator; it rejects negative step deltas. This preserves elapsed time without
+inflating throughput.
+
 ## Repository layout
 
 ```text
@@ -286,7 +292,7 @@ REPORT.md               protocol, results, interpretation, limitations
 
 ## Interpretation boundary
 
-The 500-iteration window is a controlled hardware/runtime comparison, not a
+The 5,000-iteration window is a controlled hardware/runtime comparison, not a
 claim of policy convergence. SAC, FlashSAC, and FlashMimic do not share an
 identical objective or network, so raw loss magnitudes across different rows
 must not be read as an algorithm-quality ranking. The report therefore includes

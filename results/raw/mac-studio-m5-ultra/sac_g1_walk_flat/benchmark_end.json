@@ -1,8 +1,8 @@
 {
   "experiment_id": "sac_g1_walk_flat",
   "machine_id": "mac-studio-m5-ultra",
-  "end_time_utc": "2026-10-13T04:35:16Z",
-  "end_epoch_sec": 1791866116,
-  "elapsed_sec": 48,
+  "end_time_utc": "2026-10-13T05:41:56Z",
+  "end_epoch_sec": 1791870116,
+  "elapsed_sec": 402,
   "exit_code": 0
 }

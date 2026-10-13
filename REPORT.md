@@ -4,7 +4,7 @@
 
 This report covers six pinned UniLab-family MuJoCo training runs: three
 experiment recipes on a Mac mini with Apple M5 Pro and on a Mac Studio with Apple M5 Ultra. All canonical runs completed
-with Torch's Apple MPS backend available. Across recipes, the M5 Ultra Studio delivered **2.03–2.48× the tail-half environment-step throughput** and reduced wrapper wall time by **41.4–55.6%**.
+with Torch's Apple MPS backend available. Across recipes, the M5 Ultra Studio delivered **2.03–2.54× the tail-half environment-step throughput** and reduced wrapper wall time by **50.0–60.0%**.
 
 ![Loss versus wall-clock time](figures/loss_wall_clock.png)
 
@@ -18,11 +18,13 @@ with Torch's Apple MPS backend available. Across recipes, the M5 Ultra Studio de
 Both systems are arm64, report Metal 4, use Apple Command Line Tools 27 / clang
 21, and passed an actual Torch MPS allocation, matrix multiplication, backward,
 synchronization, and finite-gradient check. The machine-readable inventories
-are in `results/machines/`.
+are in `results/machines/`. The Studio was initially described as an M5 Max,
+but `system_profiler` identifies the tested Mac17,15 system as Apple M5 Ultra;
+this report uses the measured hardware identity.
 
 ## Protocol and pins
 
-Each recipe used seed 1, 2048 environments from its owner configuration, 500
+Each recipe used seed 1, 2048 environments from its owner configuration, 5,000
 iterations, per-iteration TensorBoard logging, and no post-training play. MuJoCo
 simulation and manager tensors execute on CPU; the learner uses Apple MPS.
 
@@ -45,22 +47,28 @@ run that downloaded assets after the timer started was excluded and preserved
 separately on the test host.
 
 Steady-state throughput is the total environment-step delta over iterations
-251–500 divided by the sum of their `Perf/iteration_time` values. Each of these
-runs therefore contributes 250 iterations and 512,000 measured environment
-steps. This time-weighted aggregate is equivalent to the harmonic mean of the
-per-iteration rates because each iteration advances 2,048 steps. It is not the
-arithmetic mean and does not use the potentially noisy final iteration alone.
+2,501–5,000 divided by the sum of their `Perf/iteration_time` values. Each of
+these runs therefore contributes 2,500 iterations and 5,120,000 measured
+environment steps. This time-weighted aggregate is equivalent to the harmonic
+mean of the per-iteration rates because each ordinary iteration advances 2,048
+steps. It is not the arithmetic mean and does not use the potentially noisy
+final iteration alone.
+
+Three runs contain one zero-step timing sample in the first half: the trainer
+recorded an iteration time while the logical environment-step counter did not
+advance. The analysis preserves that time in the denominator and counts zero in
+the numerator; it rejects only negative step deltas.
 
 ## Results
 
 | Machine | Experiment | Status | Iterations | Environment steps | Training wall time (s) | End-to-end wall time (s) | Tail-half throughput (steps/s) | Final mean reward |
 |---|---|---:|---:|---:|---:|---:|---:|---:|
-| Mac mini M5 Pro | SAC / G1 walk flat | completed | 500 | 1,044,480 | 100.20 | 108 | 10,288.85 | 14.6593 |
-| Mac Studio M5 Ultra | SAC / G1 walk flat | completed | 500 | 1,044,480 | 40.77 | 48 | 25,538.01 | 16.7415 |
-| Mac mini M5 Pro | FlashSAC / G1 motion tracking | completed | 500 | 1,224,704 | 71.48 | 87 | 14,355.49 | 1.0634 |
-| Mac Studio M5 Ultra | FlashSAC / G1 motion tracking | completed | 500 | 1,224,704 | 34.63 | 51 | 30,277.75 | 1.0092 |
-| Mac mini M5 Pro | FlashMimic task `g1_flash_mimic/mujoco` using FlashSAC | completed | 500 | 1,224,704 | 141.56 | 158 | 7,270.66 | 1.5585 |
-| Mac Studio M5 Ultra | FlashMimic task `g1_flash_mimic/mujoco` using FlashSAC | completed | 500 | 1,224,704 | 70.30 | 87 | 14,756.10 | 1.5665 |
+| Mac mini M5 Pro | SAC / G1 walk flat | completed | 5,000 | 10,260,480 | 998.11 | 1,006 | 10,314.05 | 282.7983 |
+| Mac Studio M5 Ultra | SAC / G1 walk flat | completed | 5,000 | 10,260,480 | 395.50 | 402 | 26,158.03 | 283.5175 |
+| Mac mini M5 Pro | FlashSAC / G1 motion tracking | completed | 5,000 | 10,440,704 | 725.35 | 741 | 13,986.90 | 12.4588 |
+| Mac Studio M5 Ultra | FlashSAC / G1 motion tracking | completed | 5,000 | 10,440,704 | 344.06 | 362 | 29,752.11 | 13.8394 |
+| Mac mini M5 Pro | FlashMimic task `g1_flash_mimic/mujoco` using FlashSAC | completed | 5,000 | 10,440,704 | 1,432.23 | 1,449 | 7,128.40 | 40.1184 |
+| Mac Studio M5 Ultra | FlashMimic task `g1_flash_mimic/mujoco` using FlashSAC | completed | 5,000 | 10,440,704 | 709.53 | 725 | 14,453.95 | 39.8086 |
 
 `Training wall time` is `run_summary.json.training_wall_time_sec`.
 `End-to-end wall time` is the benchmark wrapper's integer-second interval from
@@ -68,9 +76,9 @@ before CLI process launch through successful process exit.
 
 | Matched recipe | Studio / mini tail-half throughput | Studio training-time reduction | Studio end-to-end reduction |
 |---|---:|---:|---:|
-| SAC / G1 walk flat | 2.48× | 59.3% | 55.6% |
-| FlashSAC / G1 motion tracking | 2.11× | 51.6% | 41.4% |
-| FlashMimic task `g1_flash_mimic/mujoco` using FlashSAC | 2.03× | 50.3% | 44.9% |
+| SAC / G1 walk flat | 2.54× | 60.4% | 60.0% |
+| FlashSAC / G1 motion tracking | 2.13× | 52.6% | 51.1% |
+| FlashMimic task `g1_flash_mimic/mujoco` using FlashSAC | 2.03× | 50.5% | 50.0% |
 
 The requested loss figure contains critic, actor, and temperature loss panels.
 Curves use a ten-event rolling mean for readability. The extracted unsmoothed
@@ -89,20 +97,20 @@ a third standalone learner algorithm. The canonical task owner is
 
 Within each matched recipe, the two machines reached similar loss scales after
 the same iteration/step budget while the Studio completed sooner. The final
-critic loss was 3.757/3.773 (mini/Studio) for SAC, 2.857/2.853 for FlashSAC,
-and 2.579/2.572 for the FlashMimic task. These close endpoints are an execution
+critic loss was 2.642/2.630 (mini/Studio) for SAC, 2.613/2.632 for FlashSAC,
+and 1.576/1.582 for the FlashMimic task. These close endpoints are an execution
 consistency check, not proof that the learned policies are equivalent.
 
-SAC shows the largest end-to-end gap: the Studio shortened the 500-iteration
-wrapper interval from 108 s to 48 s. Its tail-half throughput advantage (2.48×)
-closely tracks the bounded-window training-time advantage (2.46×); the smaller
-2.25× wrapper speedup shows that fixed startup and shutdown costs remain
-material at this short budget. FlashSAC and the FlashMimic task likewise show
-approximately twofold throughput and training-time differences.
+SAC shows the largest matched-machine advantage: the Studio shortened the
+5,000-iteration wrapper interval from 1,006 s to 402 s. Its tail-half throughput
+advantage is 2.54×, while training time is reduced by 60.4%. FlashSAC and the
+FlashMimic task likewise show approximately twofold throughput and training-time
+differences, with the longer window reducing the relative influence of startup
+overhead.
 
-Five hundred iterations are sufficient to compare startup and steady-state
-execution under a fixed recipe, but not to establish final policy quality or
-convergence. Reward is included as contextual evidence only.
+Five thousand iterations provide a longer controlled performance window, but do
+not establish final policy quality or convergence. Reward is included as
+contextual evidence only; these are still single-seed runs.
 
 ## Observed warnings and limitations
 
@@ -113,6 +121,9 @@ convergence. Reward is included as contextual evidence only.
   expected.
 - A non-writable NumPy array warning and a FlashMimic initial applied-torque
   host-view warning were observed. Neither stopped the completed runs.
+- Three runs contained one equal-step, zero-environment-step timing sample in
+  the warm-up half; this is retained in the raw event data and included in the
+  wall-time denominator.
 - The machines used the same frozen dependency graphs but preinstalled uv patch
   releases differed; uv only performed environment synchronization and was not
   in the timed training process.
@@ -126,4 +137,4 @@ Every canonical directory contains the TensorBoard event file,
 and the complete console log. Checkpoints and video are omitted to keep the
 submission repository reviewable. Reproduction commands and collection details
 are in [`README.md`](README.md). The canonical runs in this report were recorded
-between 2026-10-13 04:34 and 04:53 UTC.
+between 2026-10-13 05:35 and 08:03 UTC.

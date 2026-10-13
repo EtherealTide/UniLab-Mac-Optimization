@@ -1,8 +1,8 @@
 {
   "experiment_id": "sac_g1_walk_flat",
   "machine_id": "mac-mini-m5-pro",
-  "start_time_utc": "2026-10-13T04:47:04Z",
-  "start_epoch_sec": 1791866824,
+  "start_time_utc": "2026-10-13T07:46:13Z",
+  "start_epoch_sec": 1791877573,
   "seed": 1,
-  "iterations": 500
+  "iterations": 5000
 }

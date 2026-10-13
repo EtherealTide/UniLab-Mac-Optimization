@@ -1,8 +1,8 @@
 {
   "experiment_id": "flashmimic_g1_motion_tracking",
   "machine_id": "mac-mini-m5-pro",
-  "start_time_utc": "2026-10-13T04:50:19Z",
-  "start_epoch_sec": 1791867019,
+  "start_time_utc": "2026-10-13T07:17:47Z",
+  "start_epoch_sec": 1791875867,
   "seed": 1,
-  "iterations": 500
+  "iterations": 5000
 }
