@@ -107,13 +107,13 @@ def _tail_half_throughput(
         step = int(event["step"])
         step_delta = step - previous_step
         iteration_time = float(event["value"])
-        if step_delta <= 0:
+        if step_delta < 0:
             context = f" in {run_dir}" if run_dir is not None else ""
             raise RuntimeError(
-                f"non-positive TensorBoard step delta: {step_delta}{context}; "
+                f"negative TensorBoard step delta: {step_delta}{context}; "
                 f"previous_step={previous_step}, step={step}, "
                 f"event_index={selected_index}. The event log "
-                "contains a duplicate or non-monotonic Perf/iteration_time step; "
+                "contains a non-monotonic Perf/iteration_time step; "
                 "recollect this run into an empty result directory rather than "
                 "combining/resuming event files."
             )
@@ -242,10 +242,10 @@ def _load_run(
                 f"non-positive iteration time in {run_dir}: event_index="
                 f"{event_index}, step={step}, value={value}"
             )
-        if previous_step is not None and step <= previous_step:
+        if previous_step is not None and step < previous_step:
             detail = duplicate_steps[step]
             raise RuntimeError(
-                f"Perf/iteration_time steps are not strictly increasing in {run_dir}: "
+                f"Perf/iteration_time steps moved backwards in {run_dir}: "
                 f"event_index={event_index}, previous_step={previous_step}, "
                 f"step={step}, records_for_step={detail}. This usually means the "
                 "run was resumed or logs from multiple attempts were combined; "
