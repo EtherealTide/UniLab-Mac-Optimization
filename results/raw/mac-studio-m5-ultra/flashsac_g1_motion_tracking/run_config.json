@@ -6,7 +6,7 @@
     "device": "mps",
     "collector_device": null,
     "log_dir": "/Users/robot/unilab-mac-benchmark/results/mac-studio-m5-ultra/flashsac_g1_motion_tracking",
-    "start_time_utc": "2026-10-12T09:27:24.918152+00:00",
+    "start_time_utc": "2026-10-13T04:35:16.604236+00:00",
     "hostname": "robotdeMac-Studio.local",
     "user": "robot",
     "git": {

@@ -1,8 +1,8 @@
 {
   "experiment_id": "flashmimic_g1_motion_tracking",
   "machine_id": "mac-studio-m5-ultra",
-  "end_time_utc": "2026-10-12T09:40:39Z",
-  "end_epoch_sec": 1791798039,
-  "elapsed_sec": 88,
+  "end_time_utc": "2026-10-13T04:37:34Z",
+  "end_epoch_sec": 1791866254,
+  "elapsed_sec": 87,
   "exit_code": 0
 }

@@ -6,7 +6,7 @@
     "device": "mps",
     "collector_device": null,
     "log_dir": "/Users/liangyu/unilab-mac-benchmark/results/mac-mini-m5-pro/sac_g1_walk_flat",
-    "start_time_utc": "2026-10-12T10:27:39.128112+00:00",
+    "start_time_utc": "2026-10-13T04:47:04.889392+00:00",
     "hostname": "liangyudeMini.lan",
     "user": "liangyu",
     "git": {

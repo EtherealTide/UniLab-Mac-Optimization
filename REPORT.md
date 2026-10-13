@@ -7,8 +7,8 @@ experiment recipes on a Mac mini with Apple M5 Pro and on a Mac Studio that
 `system_profiler` identifies as Apple M5 Ultra. All canonical runs completed
 with Torch's Apple MPS backend available. The 500-iteration protocol measures a
 bounded end-to-end performance window; it is not a convergence study. Across
-matched recipes, the M5 Ultra Studio delivered **2.02–2.50× higher tail-half
-environment-step throughput** and reduced wrapper wall time by **46.1–69.9%**.
+matched recipes, the M5 Ultra Studio delivered **2.03–2.48× the tail-half
+environment-step throughput** and reduced wrapper wall time by **41.4–55.6%**.
 
 ![Loss versus wall-clock time](figures/loss_wall_clock.png)
 
@@ -59,12 +59,12 @@ arithmetic mean and does not use the potentially noisy final iteration alone.
 
 | Machine | Experiment | Status | Iterations | Environment steps | Training wall time (s) | End-to-end wall time (s) | Tail-half throughput (steps/s) | Final mean reward |
 |---|---|---:|---:|---:|---:|---:|---:|---:|
-| Mac mini M5 Pro | SAC / G1 walk flat | completed | 500 | 1,044,480 | 150.86 | 163 | 10,243.56 | 15.6263 |
-| Mac Studio M5 Ultra | SAC / G1 walk flat | completed | 500 | 1,044,480 | 40.88 | 49 | 25,584.10 | 15.9735 |
-| Mac mini M5 Pro | FlashSAC / G1 motion tracking | completed | 500 | 1,224,704 | 71.96 | 102 | 14,298.93 | 1.0364 |
-| Mac Studio M5 Ultra | FlashSAC / G1 motion tracking | completed | 500 | 1,224,704 | 34.51 | 55 | 30,368.92 | 0.9746 |
-| Mac mini M5 Pro | FlashMimic task `g1_flash_mimic/mujoco` using FlashSAC | completed | 500 | 1,224,704 | 141.66 | 172 | 7,281.65 | 1.4907 |
-| Mac Studio M5 Ultra | FlashMimic task `g1_flash_mimic/mujoco` using FlashSAC | completed | 500 | 1,224,704 | 70.40 | 88 | 14,714.66 | 1.6286 |
+| Mac mini M5 Pro | SAC / G1 walk flat | completed | 500 | 1,044,480 | 100.20 | 108 | 10,288.85 | 14.6593 |
+| Mac Studio M5 Ultra | SAC / G1 walk flat | completed | 500 | 1,044,480 | 40.77 | 48 | 25,538.01 | 16.7415 |
+| Mac mini M5 Pro | FlashSAC / G1 motion tracking | completed | 500 | 1,224,704 | 71.48 | 87 | 14,355.49 | 1.0634 |
+| Mac Studio M5 Ultra | FlashSAC / G1 motion tracking | completed | 500 | 1,224,704 | 34.63 | 51 | 30,277.75 | 1.0092 |
+| Mac mini M5 Pro | FlashMimic task `g1_flash_mimic/mujoco` using FlashSAC | completed | 500 | 1,224,704 | 141.56 | 158 | 7,270.66 | 1.5585 |
+| Mac Studio M5 Ultra | FlashMimic task `g1_flash_mimic/mujoco` using FlashSAC | completed | 500 | 1,224,704 | 70.30 | 87 | 14,756.10 | 1.5665 |
 
 `Training wall time` is `run_summary.json.training_wall_time_sec`.
 `End-to-end wall time` is the benchmark wrapper's integer-second interval from
@@ -72,9 +72,9 @@ before CLI process launch through successful process exit.
 
 | Matched recipe | Studio / mini tail-half throughput | Studio training-time reduction | Studio end-to-end reduction |
 |---|---:|---:|---:|
-| SAC / G1 walk flat | 2.50× | 72.9% | 69.9% |
-| FlashSAC / G1 motion tracking | 2.12× | 52.0% | 46.1% |
-| FlashMimic task `g1_flash_mimic/mujoco` using FlashSAC | 2.02× | 50.3% | 48.8% |
+| SAC / G1 walk flat | 2.48× | 59.3% | 55.6% |
+| FlashSAC / G1 motion tracking | 2.11× | 51.6% | 41.4% |
+| FlashMimic task `g1_flash_mimic/mujoco` using FlashSAC | 2.03× | 50.3% | 44.9% |
 
 The requested loss figure contains critic, actor, and temperature loss panels.
 Curves use a ten-event rolling mean for readability. The extracted unsmoothed
@@ -93,16 +93,16 @@ a third standalone learner algorithm. The canonical task owner is
 
 Within each matched recipe, the two machines reached similar loss scales after
 the same iteration/step budget while the Studio completed sooner. The final
-critic loss was 3.716/3.834 (mini/Studio) for SAC, 2.859/2.873 for FlashSAC,
-and 2.578/2.570 for the FlashMimic task. These close endpoints are an execution
+critic loss was 3.757/3.773 (mini/Studio) for SAC, 2.857/2.853 for FlashSAC,
+and 2.579/2.572 for the FlashMimic task. These close endpoints are an execution
 consistency check, not proof that the learned policies are equivalent.
 
 SAC shows the largest end-to-end gap: the Studio shortened the 500-iteration
-wrapper interval from 163 s to 49 s. Its tail-half throughput advantage (2.50×)
-is smaller than the bounded-window training-time advantage (3.69×),
-which shows that startup/compilation overhead is material at this short budget.
-FlashSAC and the FlashMimic task show approximately twofold throughput and
-training-time differences.
+wrapper interval from 108 s to 48 s. Its tail-half throughput advantage (2.48×)
+closely tracks the bounded-window training-time advantage (2.46×); the smaller
+2.25× wrapper speedup shows that fixed startup and shutdown costs remain
+material at this short budget. FlashSAC and the FlashMimic task likewise show
+approximately twofold throughput and training-time differences.
 
 Five hundred iterations are sufficient to compare startup and steady-state
 execution under a fixed recipe, but not to establish final policy quality or
@@ -112,8 +112,9 @@ convergence. Reward is included as contextual evidence only.
 
 - FlashMimic's upstream documentation formally targets Linux/NVIDIA. This is an
   Apple MPS evaluation and must not be represented as an upstream support claim.
-- Motion reset emitted a Torch recompilation warning on the tested MPS path.
-- CUDA graphs are skipped on Apple MPS, as expected.
+- FlashSAC emitted a Torch Dynamo recompile-limit warning on both systems.
+- CUDA graph capture was skipped for the mixed CPU/MPS execution path, as
+  expected.
 - A non-writable NumPy array warning and a FlashMimic initial applied-torque
   host-view warning were observed. Neither stopped the completed runs.
 - The machines used the same frozen dependency graphs but preinstalled uv patch
@@ -128,4 +129,5 @@ Every canonical directory contains the TensorBoard event file,
 `run_config.json`, `run_summary.json`, the benchmark wrapper's start/end JSON,
 and the complete console log. Checkpoints and video are omitted to keep the
 submission repository reviewable. Reproduction commands and collection details
-are in [`README.md`](README.md).
+are in [`README.md`](README.md). The canonical runs in this report were recorded
+between 2026-10-13 04:34 and 04:53 UTC.

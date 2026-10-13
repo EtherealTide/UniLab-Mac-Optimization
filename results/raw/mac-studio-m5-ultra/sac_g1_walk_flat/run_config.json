@@ -6,7 +6,7 @@
     "device": "mps",
     "collector_device": null,
     "log_dir": "/Users/robot/unilab-mac-benchmark/results/mac-studio-m5-ultra/sac_g1_walk_flat",
-    "start_time_utc": "2026-10-12T09:26:36.224612+00:00",
+    "start_time_utc": "2026-10-13T04:34:28.549860+00:00",
     "hostname": "robotdeMac-Studio.local",
     "user": "robot",
     "git": {

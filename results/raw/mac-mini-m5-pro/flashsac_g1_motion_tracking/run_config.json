@@ -6,7 +6,7 @@
     "device": "mps",
     "collector_device": null,
     "log_dir": "/Users/liangyu/unilab-mac-benchmark/results/mac-mini-m5-pro/flashsac_g1_motion_tracking",
-    "start_time_utc": "2026-10-12T10:30:21.834289+00:00",
+    "start_time_utc": "2026-10-13T04:48:52.911963+00:00",
     "hostname": "liangyudeMini.lan",
     "user": "liangyu",
     "git": {
