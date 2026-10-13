@@ -7,7 +7,7 @@ experiment recipes on a Mac mini with Apple M5 Pro and on a Mac Studio that
 `system_profiler` identifies as Apple M5 Ultra. All canonical runs completed
 with Torch's Apple MPS backend available. The 500-iteration protocol measures a
 bounded end-to-end performance window; it is not a convergence study. Across
-matched recipes, the M5 Ultra Studio delivered **2.02–2.47× higher final
+matched recipes, the M5 Ultra Studio delivered **2.02–2.50× higher tail-half
 environment-step throughput** and reduced wrapper wall time by **46.1–69.9%**.
 
 ![Loss versus wall-clock time](figures/loss_wall_clock.png)
@@ -48,25 +48,32 @@ assets were materialized before canonical runs; an initial Studio FlashMimic
 run that downloaded assets after the timer started was excluded and preserved
 separately on the test host.
 
+Steady-state throughput is the total environment-step delta over iterations
+251–500 divided by the sum of their `Perf/iteration_time` values. Each of these
+runs therefore contributes 250 iterations and 512,000 measured environment
+steps. This time-weighted aggregate is equivalent to the harmonic mean of the
+per-iteration rates because each iteration advances 2,048 steps. It is not the
+arithmetic mean and does not use the potentially noisy final iteration alone.
+
 ## Results
 
-| Machine | Experiment | Status | Iterations | Environment steps | Training wall time (s) | End-to-end wall time (s) | Final throughput (steps/s) | Final mean reward |
+| Machine | Experiment | Status | Iterations | Environment steps | Training wall time (s) | End-to-end wall time (s) | Tail-half throughput (steps/s) | Final mean reward |
 |---|---|---:|---:|---:|---:|---:|---:|---:|
-| Mac mini M5 Pro | SAC / G1 walk flat | completed | 500 | 1,044,480 | 150.86 | 163 | 10,306.73 | 15.6263 |
-| Mac Studio M5 Ultra | SAC / G1 walk flat | completed | 500 | 1,044,480 | 40.88 | 49 | 25,433.45 | 15.9735 |
-| Mac mini M5 Pro | FlashSAC / G1 motion tracking | completed | 500 | 1,224,704 | 71.96 | 102 | 14,338.46 | 1.0364 |
-| Mac Studio M5 Ultra | FlashSAC / G1 motion tracking | completed | 500 | 1,224,704 | 34.51 | 55 | 30,628.15 | 0.9746 |
-| Mac mini M5 Pro | FlashMimic task `g1_flash_mimic/mujoco` using FlashSAC | completed | 500 | 1,224,704 | 141.66 | 172 | 7,371.79 | 1.4907 |
-| Mac Studio M5 Ultra | FlashMimic task `g1_flash_mimic/mujoco` using FlashSAC | completed | 500 | 1,224,704 | 70.40 | 88 | 14,860.87 | 1.6286 |
+| Mac mini M5 Pro | SAC / G1 walk flat | completed | 500 | 1,044,480 | 150.86 | 163 | 10,243.56 | 15.6263 |
+| Mac Studio M5 Ultra | SAC / G1 walk flat | completed | 500 | 1,044,480 | 40.88 | 49 | 25,584.10 | 15.9735 |
+| Mac mini M5 Pro | FlashSAC / G1 motion tracking | completed | 500 | 1,224,704 | 71.96 | 102 | 14,298.93 | 1.0364 |
+| Mac Studio M5 Ultra | FlashSAC / G1 motion tracking | completed | 500 | 1,224,704 | 34.51 | 55 | 30,368.92 | 0.9746 |
+| Mac mini M5 Pro | FlashMimic task `g1_flash_mimic/mujoco` using FlashSAC | completed | 500 | 1,224,704 | 141.66 | 172 | 7,281.65 | 1.4907 |
+| Mac Studio M5 Ultra | FlashMimic task `g1_flash_mimic/mujoco` using FlashSAC | completed | 500 | 1,224,704 | 70.40 | 88 | 14,714.66 | 1.6286 |
 
 `Training wall time` is `run_summary.json.training_wall_time_sec`.
 `End-to-end wall time` is the benchmark wrapper's integer-second interval from
 before CLI process launch through successful process exit.
 
-| Matched recipe | Studio / mini final throughput | Studio training-time reduction | Studio end-to-end reduction |
+| Matched recipe | Studio / mini tail-half throughput | Studio training-time reduction | Studio end-to-end reduction |
 |---|---:|---:|---:|
-| SAC / G1 walk flat | 2.47× | 72.9% | 69.9% |
-| FlashSAC / G1 motion tracking | 2.14× | 52.0% | 46.1% |
+| SAC / G1 walk flat | 2.50× | 72.9% | 69.9% |
+| FlashSAC / G1 motion tracking | 2.12× | 52.0% | 46.1% |
 | FlashMimic task `g1_flash_mimic/mujoco` using FlashSAC | 2.02× | 50.3% | 48.8% |
 
 The requested loss figure contains critic, actor, and temperature loss panels.
@@ -91,8 +98,8 @@ and 2.578/2.570 for the FlashMimic task. These close endpoints are an execution
 consistency check, not proof that the learned policies are equivalent.
 
 SAC shows the largest end-to-end gap: the Studio shortened the 500-iteration
-wrapper interval from 163 s to 49 s. Its final steady-state throughput advantage
-(2.47×) is smaller than the bounded-window training-time advantage (3.69×),
+wrapper interval from 163 s to 49 s. Its tail-half throughput advantage (2.50×)
+is smaller than the bounded-window training-time advantage (3.69×),
 which shows that startup/compilation overhead is material at this short budget.
 FlashSAC and the FlashMimic task show approximately twofold throughput and
 training-time differences.

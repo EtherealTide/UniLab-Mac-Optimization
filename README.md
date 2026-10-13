@@ -183,7 +183,23 @@ MACHINE_ID=mac-studio-m5-ultra ./scripts/run_unilab_benchmarks.sh
 The experiment matrix is in [`config/experiments.tsv`](config/experiments.tsv).
 All runs use seed 1, the owner configuration's 2048 environments, 500 training
 iterations, per-iteration TensorBoard logging, and `training.no_play=true`.
-Results are never overwritten. To run one row only:
+Results are never overwritten. The scripts run each trainer under macOS's
+`/usr/bin/script` pseudo-terminal, so the Rich panel refreshes live while the
+same terminal stream is saved to `console.log`.
+
+Set `MAX_ITERATIONS` to change the training limit for every selected row. This
+maps directly to `algo.max_iterations`; it is a count of training iterations,
+not a target number of environment transitions. For example:
+
+```bash
+MAX_ITERATIONS=1000 \
+MACHINE_ID=mac-mini-m5-pro \
+  ./scripts/run_unilab_benchmarks.sh
+```
+
+Omitting `MAX_ITERATIONS` preserves the report's canonical 500-iteration
+protocol. The older `ITERATIONS_OVERRIDE` name remains accepted for backward
+compatibility. To run one row only:
 
 ```bash
 ONLY_EXPERIMENT=flashmimic_g1_motion_tracking \
@@ -219,6 +235,9 @@ uv run \
   scripts/analyze_results.py
 ```
 
+For a custom iteration limit, pass the same value to the validator, for
+example `scripts/analyze_results.py --expected-iterations 1000`.
+
 The collector refuses to overwrite a non-empty destination and writes a
 `SHA256SUMS` manifest after transfer. The plot has three panels
 (`Loss/critic`, `Loss/actor`, and `Loss/temperature`). Color identifies the
@@ -234,6 +253,21 @@ and first compilation, not just the interval after the first loss sample. The
 wrapper timestamp has one-second resolution. A ten-sample rolling mean is
 used only for visualization; `results/processed/curves.csv` retains the raw
 scalar values.
+
+The reported steady-state throughput aggregates the latter half of the logged
+iterations:
+
+```text
+tail-half steps/s = sum(environment-step deltas)
+                    / sum(Perf/iteration_time)
+```
+
+Step deltas are derived from adjacent TensorBoard global steps. This is a
+time-weighted rate (equivalently, the harmonic mean of per-iteration rates when
+every iteration has the same step count), not an arithmetic mean and not the
+last iteration's rate. `Perf/iteration_time` is recorded after MPS
+synchronization. End-to-end wrapper wall time remains a separate result that
+includes startup, warm-up, compilation, logging, checkpointing, and shutdown.
 
 ## Repository layout
 

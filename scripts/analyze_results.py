@@ -89,6 +89,38 @@ def _load_versions(path: Path) -> dict[str, str]:
     return versions
 
 
+def _tail_half_throughput(
+    iteration_events: list[dict[str, Any]],
+) -> dict[str, int | float]:
+    """Aggregate environment-step throughput over the latter half of a run."""
+    if len(iteration_events) < 2:
+        raise RuntimeError("tail-half throughput requires at least two iterations")
+
+    start = len(iteration_events) // 2
+    selected = iteration_events[start:]
+    previous_step = int(iteration_events[start - 1]["step"])
+    total_steps = 0
+    total_time = 0.0
+    for event in selected:
+        step = int(event["step"])
+        step_delta = step - previous_step
+        iteration_time = float(event["value"])
+        if step_delta <= 0:
+            raise RuntimeError(f"non-positive TensorBoard step delta: {step_delta}")
+        if iteration_time <= 0:
+            raise RuntimeError(f"non-positive iteration time: {iteration_time}")
+        total_steps += step_delta
+        total_time += iteration_time
+        previous_step = step
+
+    return {
+        "tail_half_iteration_count": len(selected),
+        "tail_half_env_steps": total_steps,
+        "tail_half_iteration_time_sec": total_time,
+        "tail_half_env_steps_per_sec": total_steps / total_time,
+    }
+
+
 def _load_run(
     run_dir: Path,
     expected_iterations: dict[str, int],
@@ -184,6 +216,14 @@ def _load_run(
     for values in by_metric.values():
         values.sort(key=lambda item: (item["step"], item["wall_time_sec"]))
 
+    iteration_events = by_metric.get("Perf/iteration_time", [])
+    if len(iteration_events) != expected_count:
+        raise RuntimeError(
+            f"expected {expected_count} iteration-time samples in {run_dir}, "
+            f"found {len(iteration_events)}"
+        )
+    tail_half = _tail_half_throughput(iteration_events)
+
     result_summary: dict[str, Any] = {
         "machine": machine,
         "experiment": experiment,
@@ -195,7 +235,7 @@ def _load_run(
         "benchmark_elapsed_sec": benchmark_end.get("elapsed_sec"),
         "final_mean_reward": summary.get("final_mean_reward"),
         "final_env_steps_per_sec": summary.get("final_env_steps_per_sec"),
-        "tail_env_steps_per_sec": summary.get("tail_env_steps_per_sec"),
+        **tail_half,
     }
     for tag in (*LOSS_TAGS, "Perf/total_fps"):
         values = by_metric.get(tag, [])
@@ -287,9 +327,20 @@ def main() -> int:
         "--figure", type=Path, default=Path("figures/loss_wall_clock.png")
     )
     parser.add_argument("--smoothing", type=int, default=10)
+    parser.add_argument(
+        "--expected-iterations",
+        type=int,
+        help="override the experiment-matrix iteration count for custom runs",
+    )
     args = parser.parse_args()
 
     expected_iterations = _load_protocol(args.experiments)
+    if args.expected_iterations is not None:
+        if args.expected_iterations < 2:
+            parser.error("--expected-iterations must be at least 2")
+        expected_iterations = {
+            experiment: args.expected_iterations for experiment in expected_iterations
+        }
     versions = _load_versions(args.versions)
     run_dirs = sorted(path.parent for path in args.input.rglob("run_config.json"))
     if not run_dirs:
