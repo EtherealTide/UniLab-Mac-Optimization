@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Collect the machine and locked runtime facts used by the report."""
+"""Collect machine and resolved runtime provenance used by the report."""
 
 from __future__ import annotations
 
@@ -16,9 +16,7 @@ from typing import Any
 
 def _command(*args: str) -> str | None:
     try:
-        return subprocess.check_output(
-            args, text=True, stderr=subprocess.STDOUT
-        ).strip()
+        return subprocess.check_output(args, text=True, stderr=subprocess.STDOUT).strip()
     except (OSError, subprocess.CalledProcessError):
         return None
 
@@ -73,12 +71,8 @@ def main() -> int:
         "platform": platform.platform(),
         "machine": platform.machine(),
         "macos": _command("sw_vers"),
-        "hardware": _redact_hardware_identifiers(
-            _system_profiler("SPHardwareDataType")
-        ),
-        "displays": _redact_hardware_identifiers(
-            _system_profiler("SPDisplaysDataType")
-        ),
+        "hardware": _redact_hardware_identifiers(_system_profiler("SPHardwareDataType")),
+        "displays": _redact_hardware_identifiers(_system_profiler("SPDisplaysDataType")),
         "cpu": {
             "brand": _sysctl("machdep.cpu.brand_string"),
             "physical_cores": _sysctl("hw.physicalcpu"),
@@ -112,16 +106,12 @@ def main() -> int:
             "mps_available": torch.backends.mps.is_available(),
         },
         "environment": {
-            "PYTORCH_ENABLE_MPS_FALLBACK": os.environ.get(
-                "PYTORCH_ENABLE_MPS_FALLBACK"
-            ),
+            "PYTORCH_ENABLE_MPS_FALLBACK": os.environ.get("PYTORCH_ENABLE_MPS_FALLBACK"),
             "HF_ENDPOINT": os.environ.get("HF_ENDPOINT"),
         },
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(
-        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
+    args.output.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(args.output)
     return 0
 

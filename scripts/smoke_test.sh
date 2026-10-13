@@ -3,8 +3,6 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 BENCHMARK_REPO="$(cd -- "$SCRIPT_DIR/.." && pwd)"
-# shellcheck source=../config/versions.env
-source "$BENCHMARK_REPO/config/versions.env"
 
 export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 DEPLOY_ROOT="${DEPLOY_ROOT:-$HOME/unilab-mac-benchmark}"
@@ -32,21 +30,21 @@ common_overrides=(
 )
 
 env FORCE_COLOR=1 TTY_INTERACTIVE=1 \
-  uv run --directory "$UNILAB_DIR" --frozen --no-sync train \
+  uv run --directory "$UNILAB_DIR" --no-sync train \
   --algo sac --task g1_walk_flat --sim mujoco \
   "${common_overrides[@]}" \
   "training.log_dir=$SMOKE_ROOT/sac_g1_walk_flat" \
   2>&1 | tee "$SMOKE_ROOT/sac_g1_walk_flat.log"
 
 env FORCE_COLOR=1 TTY_INTERACTIVE=1 \
-  uv run --directory "$UNILAB_DIR" --frozen --no-sync train \
+  uv run --directory "$UNILAB_DIR" --no-sync train \
   --algo flashsac --task g1_motion_tracking --sim mujoco \
   "${common_overrides[@]}" \
   "training.log_dir=$SMOKE_ROOT/flashsac_g1_motion_tracking" \
   2>&1 | tee "$SMOKE_ROOT/flashsac_g1_motion_tracking.log"
 
 env FORCE_COLOR=1 TTY_INTERACTIVE=1 \
-  uv run --directory "$FLASHMIMIC_DIR" --frozen --no-sync flashmimic-train \
+  uv run --directory "$FLASHMIMIC_DIR" --no-sync flashmimic-train \
   task=g1_flash_mimic/mujoco \
   "${common_overrides[@]}" \
   "training.log_dir=$SMOKE_ROOT/flashmimic_g1_motion_tracking" \

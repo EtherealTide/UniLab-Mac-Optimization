@@ -1,21 +1,21 @@
 #!/usr/bin/env python3
-"""Extract TensorBoard curves and render one loss-vs-wall-clock figure."""
+"""Validate benchmark artifacts and render reward-vs-wall-clock results."""
 
 from __future__ import annotations
 
 import argparse
 import csv
 import json
-from collections import Counter
-from collections import defaultdict
+import os
+from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
 import matplotlib.pyplot as plt
 from tensorboard.backend.event_processing import event_accumulator
 
-LOSS_TAGS = ("Loss/critic", "Loss/actor", "Loss/temperature")
-EXTRA_TAGS = ("Train/mean_reward", "Perf/total_fps", "Perf/iteration_time")
+REWARD_TAG = "Train/mean_reward"
+EXTRA_TAGS = ("Perf/total_fps", "Perf/iteration_time")
 
 ALGO_LABELS = {
     "sac_g1_walk_flat": "SAC · G1 walk flat",
@@ -40,9 +40,7 @@ MACHINE_LABELS = {
 def _find_event_file(run_dir: Path) -> Path:
     files = sorted(run_dir.glob("events.out.tfevents.*"))
     if len(files) != 1:
-        raise RuntimeError(
-            f"expected one TensorBoard event file in {run_dir}, found {len(files)}"
-        )
+        raise RuntimeError(f"expected one TensorBoard event file in {run_dir}, found {len(files)}")
     return files[0]
 
 
@@ -70,23 +68,9 @@ def _load_protocol(path: Path) -> dict[str, int]:
             expected[row[0]] = int(row[5])
     if set(expected) != set(ALGO_LABELS):
         raise RuntimeError(
-            f"experiment matrix and plot labels differ: {sorted(expected)} vs "
-            f"{sorted(ALGO_LABELS)}"
+            f"experiment matrix and plot labels differ: {sorted(expected)} vs {sorted(ALGO_LABELS)}"
         )
     return expected
-
-
-def _load_versions(path: Path) -> dict[str, str]:
-    versions: dict[str, str] = {}
-    for raw_line in path.read_text(encoding="utf-8").splitlines():
-        line = raw_line.strip()
-        if not line or line.startswith("#"):
-            continue
-        key, separator, value = line.partition("=")
-        if not separator:
-            raise RuntimeError(f"invalid version row in {path}: {raw_line}")
-        versions[key] = value
-    return versions
 
 
 def _tail_half_throughput(
@@ -134,7 +118,8 @@ def _tail_half_throughput(
 def _load_run(
     run_dir: Path,
     expected_iterations: dict[str, int],
-    versions: dict[str, str],
+    *,
+    require_video: bool,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
     config = json.loads((run_dir / "run_config.json").read_text(encoding="utf-8"))
     summary_path = run_dir / "run_summary.json"
@@ -157,11 +142,6 @@ def _load_run(
             f"result path does not match metadata: {run_dir} vs {machine}/{experiment}"
         )
     expected_count = expected_iterations[experiment]
-    expected_commit = (
-        versions["FLASHMIMIC_COMMIT"]
-        if experiment == "flashmimic_g1_motion_tracking"
-        else versions["UNILAB_COMMIT"]
-    )
     checks = {
         "run status": (summary.get("status"), "completed"),
         "completed iterations": (summary.get("completed_iterations"), expected_count),
@@ -174,8 +154,6 @@ def _load_run(
         "effective seed": (config["run"].get("effective_seed"), 1),
         "simulation backend": (config["run"].get("sim_backend"), "mujoco"),
         "learner device": (config["run"].get("device"), "mps"),
-        "git commit": (config["run"]["git"].get("commit"), expected_commit),
-        "git dirty": (config["run"]["git"].get("dirty"), False),
         "configured environments": (config["config"]["algo"].get("num_envs"), 2048),
         "configured max iterations": (
             config["config"]["algo"].get("max_iterations"),
@@ -191,6 +169,9 @@ def _load_run(
     }
     if failures:
         raise RuntimeError(f"invalid canonical run {run_dir}: {failures}")
+    video_path = run_dir / "play_video.mp4"
+    if require_video and (not video_path.is_file() or video_path.stat().st_size == 0):
+        raise RuntimeError(f"missing or empty final policy video: {video_path}")
 
     # Wrapper start precedes CLI imports and tracker construction. Its epoch
     # timestamp therefore gives the requested end-to-end wall-clock origin.
@@ -199,13 +180,10 @@ def _load_run(
     accumulator = event_accumulator.EventAccumulator(str(_find_event_file(run_dir)))
     accumulator.Reload()
     available = set(accumulator.Tags().get("scalars", []))
-    missing_loss_tags = set(LOSS_TAGS) - available
-    if missing_loss_tags:
-        raise RuntimeError(
-            f"missing loss tags in {run_dir}: {sorted(missing_loss_tags)}"
-        )
+    if REWARD_TAG not in available:
+        raise RuntimeError(f"missing reward tag {REWARD_TAG!r} in {run_dir}")
     rows: list[dict[str, Any]] = []
-    for tag in (*LOSS_TAGS, *EXTRA_TAGS):
+    for tag in (REWARD_TAG, *EXTRA_TAGS):
         if tag not in available:
             continue
         for scalar in accumulator.Scalars(tag):
@@ -228,6 +206,15 @@ def _load_run(
         raise RuntimeError(
             f"expected {expected_count} iteration-time samples in {run_dir}, "
             f"found {len(raw_iteration_events)}"
+        )
+    reward_events = by_metric.get(REWARD_TAG, [])
+    # Some owners do not emit episode reward during their first replay warm-up
+    # iterations.  Require dense coverage without assuming an event at step 0.
+    minimum_reward_samples = max(1, int(expected_count * 0.95))
+    if len(reward_events) < minimum_reward_samples:
+        raise RuntimeError(
+            f"expected at least {minimum_reward_samples} reward samples in {run_dir}, "
+            f"found {len(reward_events)}"
         )
     duplicate_steps: dict[int, list[tuple[int, float, float]]] = defaultdict(list)
     previous_step: int | None = None
@@ -276,9 +263,11 @@ def _load_run(
         "benchmark_elapsed_sec": benchmark_end.get("elapsed_sec"),
         "final_mean_reward": summary.get("final_mean_reward"),
         "final_env_steps_per_sec": summary.get("final_env_steps_per_sec"),
+        "video_path": f"{machine}/{experiment}/play_video.mp4",
+        "video_available": video_path.is_file() and video_path.stat().st_size > 0,
         **tail_half,
     }
-    for tag in (*LOSS_TAGS, "Perf/total_fps"):
+    for tag in (REWARD_TAG, "Perf/total_fps"):
         values = by_metric.get(tag, [])
         result_summary[f"last_{tag.replace('/', '_').lower()}"] = (
             values[-1]["value"] if values else None
@@ -300,40 +289,29 @@ def _write_csv(path: Path, rows: list[dict[str, Any]], fieldnames: list[str]) ->
 
 
 def _plot(rows: list[dict[str, Any]], output: Path, smoothing: int) -> None:
-    grouped: dict[tuple[str, str, str], list[dict[str, Any]]] = defaultdict(list)
+    grouped: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
     for row in rows:
-        if row["metric"] in LOSS_TAGS:
-            grouped[(row["metric"], row["experiment"], row["machine"])].append(row)
+        if row["metric"] == REWARD_TAG:
+            grouped[(row["experiment"], row["machine"])].append(row)
 
-    fig, axes = plt.subplots(3, 1, figsize=(14, 12), sharex=True)
-    for axis, tag in zip(axes, LOSS_TAGS):
-        for (metric, experiment, machine), series in sorted(grouped.items()):
-            if metric != tag:
-                continue
+    fig, axes = plt.subplots(len(ALGO_LABELS), 1, figsize=(14, 12), sharex=True)
+    for axis, experiment in zip(axes, ALGO_LABELS, strict=True):
+        for machine in MACHINE_LABELS:
+            series = grouped.get((experiment, machine), [])
             series.sort(key=lambda item: item["wall_time_sec"])
             x = [item["wall_time_sec"] / 60.0 for item in series]
             y = _rolling_mean([item["value"] for item in series], smoothing)
-            label = f"{ALGO_LABELS.get(experiment, experiment)} · {MACHINE_LABELS.get(machine, machine)}"
             axis.plot(
                 x,
                 y,
-                color=ALGO_COLORS.get(experiment),
-                linestyle=MACHINE_STYLES.get(machine, "-"),
+                color=ALGO_COLORS[experiment],
+                linestyle=MACHINE_STYLES[machine],
                 linewidth=2.0,
-                label=label,
+                label=MACHINE_LABELS[machine],
             )
-        axis.set_ylabel(tag.removeprefix("Loss/").title())
+        axis.set_title(ALGO_LABELS[experiment], loc="left")
+        axis.set_ylabel("Mean reward")
         axis.grid(True, alpha=0.25)
-        if not axis.lines:
-            axis.text(
-                0.5,
-                0.5,
-                "No scalar data",
-                ha="center",
-                va="center",
-                transform=axis.transAxes,
-            )
-
     axes[-1].set_xlabel("End-to-end wall-clock time from benchmark start (minutes)")
     handles, labels = axes[0].get_legend_handles_labels()
     if handles:
@@ -346,28 +324,130 @@ def _plot(rows: list[dict[str, Any]], output: Path, smoothing: int) -> None:
             frameon=False,
         )
     fig.suptitle(
-        f"UniLab off-policy loss vs wall-clock time (rolling mean, n={smoothing})",
+        f"UniLab mean reward vs wall-clock time (rolling mean, n={smoothing})",
         fontsize=15,
-        y=0.99,
     )
-    fig.subplots_adjust(top=0.82, bottom=0.07, left=0.08, right=0.98, hspace=0.04)
+    fig.tight_layout(rect=(0, 0, 1, 0.91))
     output.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output, dpi=180, bbox_inches="tight")
     plt.close(fig)
 
 
+def _format_float(value: Any, digits: int = 2) -> str:
+    return "—" if value is None else f"{float(value):,.{digits}f}"
+
+
+def _write_report(
+    path: Path,
+    figure: Path,
+    raw_root: Path,
+    summaries: list[dict[str, Any]],
+    *,
+    iteration_override: int | None,
+    smoothing: int,
+) -> None:
+    """Write the two-table report directly from validated run summaries."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    figure_link = os.path.relpath(figure, path.parent)
+    protocol_note = (
+        f"This checked-in snapshot was validated with the explicit uniform "
+        f"`--expected-iterations {iteration_override}` override."
+        if iteration_override is not None
+        else "Each recipe uses its configured default iteration budget."
+    )
+    lines = [
+        "# UniLab Apple Silicon performance report",
+        "",
+        "The figure and two tables below are generated from the validated "
+        f"TensorBoard and run metadata artifacts. {protocol_note}",
+        "",
+        f"![Mean reward versus wall-clock time]({figure_link})",
+        "",
+        "| Machine | Experiment | Status | Iterations | Environment steps | "
+        "Training wall time (s) | End-to-end wall time (s) | Tail-half "
+        "throughput (steps/s) | Final mean reward | Final video |",
+        "|---|---|---:|---:|---:|---:|---:|---:|---:|---|",
+    ]
+    for row in summaries:
+        video_path = raw_root / str(row["video_path"])
+        video = (
+            f"[MP4]({os.path.relpath(video_path, path.parent)})"
+            if row["video_available"]
+            else "not collected"
+        )
+        lines.append(
+            "| "
+            + " | ".join(
+                (
+                    MACHINE_LABELS[row["machine"]],
+                    ALGO_LABELS[row["experiment"]],
+                    str(row["status"]),
+                    f"{int(row['completed_iterations']):,}",
+                    f"{int(row['total_env_steps']):,}",
+                    _format_float(row["training_wall_time_sec"]),
+                    _format_float(row["benchmark_elapsed_sec"], 0),
+                    _format_float(row["tail_half_env_steps_per_sec"]),
+                    _format_float(row["final_mean_reward"], 4),
+                    video,
+                )
+            )
+            + " |"
+        )
+
+    lines.extend(
+        (
+            "",
+            "| Matched recipe | Studio / mini tail-half throughput | Studio "
+            "training-time reduction | Studio end-to-end reduction |",
+            "|---|---:|---:|---:|",
+        )
+    )
+    by_pair = {(row["experiment"], row["machine"]): row for row in summaries}
+    for experiment in ALGO_LABELS:
+        mini = by_pair[(experiment, "mac-mini-m5-pro")]
+        studio = by_pair[(experiment, "mac-studio-m5-ultra")]
+        ratio = float(studio["tail_half_env_steps_per_sec"]) / float(
+            mini["tail_half_env_steps_per_sec"]
+        )
+        training_reduction = 100.0 * (
+            1.0 - float(studio["training_wall_time_sec"]) / float(mini["training_wall_time_sec"])
+        )
+        elapsed_reduction = 100.0 * (
+            1.0 - float(studio["benchmark_elapsed_sec"]) / float(mini["benchmark_elapsed_sec"])
+        )
+        lines.append(
+            f"| {ALGO_LABELS[experiment]} | {ratio:.2f}× | "
+            f"{training_reduction:.1f}% | {elapsed_reduction:.1f}% |"
+        )
+
+    lines.extend(
+        (
+            "",
+            "Throughput is the time-weighted environment-step rate over the latter "
+            f"half of each run. Reward curves use a {smoothing}-event rolling mean; "
+            "the CSV retains raw values. FlashMimic is the "
+            "`g1_flash_mimic/mujoco` task package using the FlashSAC learner. "
+            "Training timing excludes final policy playback; each MP4 is rendered "
+            "after training from that run's final checkpoint.",
+            "",
+        )
+    )
+    path.write_text("\n".join(lines), encoding="utf-8")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--input", type=Path, default=Path("results/raw"))
-    parser.add_argument(
-        "--experiments", type=Path, default=Path("config/experiments.tsv")
-    )
-    parser.add_argument("--versions", type=Path, default=Path("config/versions.env"))
+    parser.add_argument("--experiments", type=Path, default=Path("config/experiments.tsv"))
     parser.add_argument("--processed", type=Path, default=Path("results/processed"))
-    parser.add_argument(
-        "--figure", type=Path, default=Path("figures/loss_wall_clock.png")
-    )
+    parser.add_argument("--figure", type=Path, default=Path("figures/reward_wall_clock.png"))
+    parser.add_argument("--report", type=Path, default=Path("REPORT.md"))
     parser.add_argument("--smoothing", type=int, default=10)
+    parser.add_argument(
+        "--allow-missing-videos",
+        action="store_true",
+        help="allow intermediate analysis before the six final MP4 files are collected",
+    )
     parser.add_argument(
         "--expected-iterations",
         type=int,
@@ -375,6 +455,8 @@ def main() -> int:
     )
     args = parser.parse_args()
 
+    if args.smoothing < 1:
+        parser.error("--smoothing must be at least 1")
     expected_iterations = _load_protocol(args.experiments)
     if args.expected_iterations is not None:
         if args.expected_iterations < 2:
@@ -382,7 +464,6 @@ def main() -> int:
         expected_iterations = {
             experiment: args.expected_iterations for experiment in expected_iterations
         }
-    versions = _load_versions(args.versions)
     run_dirs = sorted(path.parent for path in args.input.rglob("run_config.json"))
     if not run_dirs:
         raise SystemExit(f"no run_config.json files found under {args.input}")
@@ -390,7 +471,11 @@ def main() -> int:
     all_rows: list[dict[str, Any]] = []
     summaries: list[dict[str, Any]] = []
     for run_dir in run_dirs:
-        rows, summary = _load_run(run_dir, expected_iterations, versions)
+        rows, summary = _load_run(
+            run_dir,
+            expected_iterations,
+            require_video=not args.allow_missing_videos,
+        )
         all_rows.extend(rows)
         summaries.append(summary)
 
@@ -398,9 +483,7 @@ def main() -> int:
     pair_counts = Counter(observed_pairs)
     duplicate_pairs = {pair: count for pair, count in pair_counts.items() if count != 1}
     expected_pairs = {
-        (experiment, machine)
-        for experiment in expected_iterations
-        for machine in MACHINE_LABELS
+        (experiment, machine) for experiment in expected_iterations for machine in MACHINE_LABELS
     }
     observed_set = set(observed_pairs)
     if duplicate_pairs or observed_set != expected_pairs:
@@ -411,10 +494,15 @@ def main() -> int:
             f"duplicates={duplicate_pairs}"
         )
 
-    all_rows.sort(
-        key=lambda row: (row["experiment"], row["machine"], row["metric"], row["step"])
+    all_rows.sort(key=lambda row: (row["experiment"], row["machine"], row["metric"], row["step"]))
+    experiment_order = {name: index for index, name in enumerate(ALGO_LABELS)}
+    machine_order = {name: index for index, name in enumerate(MACHINE_LABELS)}
+    summaries.sort(
+        key=lambda row: (
+            experiment_order[row["experiment"]],
+            machine_order[row["machine"]],
+        )
     )
-    summaries.sort(key=lambda row: (row["experiment"], row["machine"]))
     _write_csv(
         args.processed / "curves.csv",
         all_rows,
@@ -423,11 +511,20 @@ def main() -> int:
     summary_fields = sorted({key for row in summaries for key in row})
     _write_csv(args.processed / "summary.csv", summaries, summary_fields)
     _plot(all_rows, args.figure, args.smoothing)
+    _write_report(
+        args.report,
+        args.figure,
+        args.input,
+        summaries,
+        iteration_override=args.expected_iterations,
+        smoothing=args.smoothing,
+    )
 
     print(f"Processed and validated {len(observed_set)}/{len(expected_pairs)} runs")
     print(args.processed / "curves.csv")
     print(args.processed / "summary.csv")
     print(args.figure)
+    print(args.report)
     return 0
 
 

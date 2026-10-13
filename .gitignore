@@ -2,7 +2,5 @@ __pycache__/
 *.pyc
 .DS_Store
 
-# Raw checkpoints and videos remain on benchmark hosts. Only the explicitly
-# collected event/config/summary/console artifacts belong in this repository.
+# Raw checkpoints remain on benchmark hosts. Final MP4 files are collected.
 results/raw/**/model_*.pt
-results/raw/**/*.mp4

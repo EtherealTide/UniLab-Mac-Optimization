@@ -3,8 +3,6 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 BENCHMARK_REPO="$(cd -- "$SCRIPT_DIR/.." && pwd)"
-# shellcheck source=../config/versions.env
-source "$BENCHMARK_REPO/config/versions.env"
 
 export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 DEPLOY_ROOT="${DEPLOY_ROOT:-$HOME/unilab-mac-benchmark}"
@@ -44,32 +42,10 @@ if [[ ! -d "$UNILAB_DIR/.git" ]]; then
   echo "Missing deployment at $UNILAB_DIR; run scripts/setup_macos.sh first." >&2
   exit 1
 fi
-uv run --directory "$UNILAB_DIR" --frozen --no-sync python \
-  "$BENCHMARK_REPO/scripts/verify_environment.py" \
-  --repo "$UNILAB_DIR" \
-  --python-version "$PYTHON_VERSION" \
-  --unilab-commit "$UNILAB_COMMIT" \
-  --unilab-version "$UNILAB_VERSION" \
-  --unilab-rl-version "$UNILAB_RL_VERSION" \
-  --unisim-version "$UNISIM_VERSION" \
-  --torch-version "$TORCH_VERSION" \
-  --mujoco-version "$MUJOCO_VERSION" \
-  --mjbatch-version "$MJBATCH_VERSION" \
-  --flashmimic-repo "$FLASHMIMIC_DIR" \
-  --flashmimic-commit "$FLASHMIMIC_COMMIT"
-
-uv run --directory "$FLASHMIMIC_DIR" --frozen --no-sync python \
-  "$BENCHMARK_REPO/scripts/verify_flashmimic_environment.py" \
-  --repo "$FLASHMIMIC_DIR" \
-  --commit "$FLASHMIMIC_COMMIT" \
-  --python-version "$PYTHON_VERSION" \
-  --flashmimic-version "$FLASHMIMIC_VERSION" \
-  --unilab-version "$UNILAB_VERSION" \
-  --unilab-rl-version "$UNILAB_RL_VERSION" \
-  --unisim-version "$UNISIM_VERSION" \
-  --torch-version "$FLASHMIMIC_TORCH_VERSION" \
-  --mujoco-version "$MUJOCO_VERSION"
-
+if [[ ! -d "$FLASHMIMIC_DIR/.git" ]]; then
+  echo "Missing deployment at $FLASHMIMIC_DIR; run scripts/setup_macos.sh first." >&2
+  exit 1
+fi
 mkdir -p "$RESULTS_ROOT/$MACHINE_ID"
 while IFS=$'\t' read -r experiment_id entrypoint algo task sim default_iterations <&3; do
   [[ -z "$experiment_id" || "$experiment_id" == \#* ]] && continue
@@ -99,12 +75,12 @@ while IFS=$'\t' read -r experiment_id entrypoint algo task sim default_iteration
   set +e
   if [[ "$entrypoint" == "unilab" ]]; then
     train_command=(
-      uv run --directory "$UNILAB_DIR" --frozen --no-sync train
+      uv run --directory "$UNILAB_DIR" --no-sync train
       --algo "$algo" --task "$task" --sim "$sim"
     )
   elif [[ "$entrypoint" == "flashmimic" ]]; then
     train_command=(
-      uv run --directory "$FLASHMIMIC_DIR" --frozen --no-sync flashmimic-train
+      uv run --directory "$FLASHMIMIC_DIR" --no-sync flashmimic-train
       "task=$task/$sim"
     )
   else

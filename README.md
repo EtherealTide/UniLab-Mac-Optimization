@@ -1,80 +1,49 @@
 # UniLab Apple Silicon benchmark
 
-This repository is the auditable test bundle for six UniLab/UniLab-RL MuJoCo
-runs on two Apple Silicon systems:
+This repository reproduces three UniLab-family MuJoCo recipes on two Apple
+Silicon machines, for six runs in total:
 
-| Experiment | Mac mini | Mac Studio |
-|---|---:|---:|
-| SAC + MuJoCo + `g1_walk_flat` | M5 Pro | M5 Ultra |
-| FlashSAC + MuJoCo + `g1_motion_tracking` | M5 Pro | M5 Ultra |
-| FlashMimic task (`g1_flash_mimic/mujoco`) using FlashSAC | M5 Pro | M5 Ultra |
+| Experiment ID | Recipe | Default iterations |
+|---|---|---:|
+| `sac_g1_walk_flat` | SAC + MuJoCo + `g1_walk_flat` | 5,000 |
+| `flashsac_g1_motion_tracking` | FlashSAC + MuJoCo + `g1_motion_tracking` | 25,000 |
+| `flashmimic_g1_motion_tracking` | `g1_flash_mimic/mujoco` task using the FlashSAC learner | 60,000 |
 
-The Mac Studio was described as both “M5 Max” and “M5 Ultra” in the original
-request. `system_profiler` identifies the tested machine as **Apple M5 Ultra**,
-so this repository uses that hardware-reported name. “flashmiic” was interpreted
-as the official `Motphys/FlashMimic` task package. FlashMimic uses FlashSAC and
-is not a separate learner algorithm. Its canonical MuJoCo task is
-`g1_flash_mimic/mujoco`; the pinned owner configuration tracks the packaged
-G1 motion asset `dance1_subject2_part.npz`.
+Each recipe runs once on the Mac mini M5 Pro and once on the Mac Studio M5
+Ultra. The Studio was initially described as M5 Max, but its collected
+`system_profiler` inventory identifies it as M5 Ultra, so the hardware-reported
+name is used here. FlashMimic is a motion-imitation task package using FlashSAC,
+not a separate learner algorithm.
 
-The measured results, plots, methodology, and limitations are in
-[REPORT.md](REPORT.md). Raw TensorBoard logs and run metadata are kept under
-`results/raw/`; checkpoints and videos are intentionally excluded.
+[REPORT.md](REPORT.md) is generated from the validated result artifacts. Its
+only result tables are the six-run table and the three matched-machine
+comparisons. The figure plots mean reward against end-to-end wall-clock time.
 
-## Immutable software inputs
+## Version policy
 
-The source of truth is [`config/versions.env`](config/versions.env). The
-benchmark pins the following immutable inputs:
+This protocol does not pin UniLab, unilab-rl, unisim, FlashMimic, Python, or
+package versions in this repository. Setup updates the UniLab and FlashMimic
+checkouts to their current upstream default branches and lets each checkout
+resolve its own dependency configuration. Upstream project constraints and
+lockfiles may still constrain what their own environments resolve. The actual
+Git revisions, resolved packages, Python version, macOS version, and MPS status
+are recorded in `machine-*.json` and each run's `run_config.json`; they are
+provenance, not acceptance pins.
 
-| Component | Pin used |
-|---|---|
-| UniLab source for SAC/FlashSAC | `d5aef9f740e081d835738979e9e4e852805b54c3` (`1.3.4`) |
-| UniLab release used by FlashMimic lock | `33bb11c4da7df25efdd6c165c9ba23f4de290605` (`1.3.4`) |
-| UniLab `uv.lock` SHA-256 | `1a87e4041976fbdb3a1d862db0ef3fa9545c7976f714e4aa93b77c9cf43d1741` |
-| unilab-rl | `1.4.11`; release commit `739986e63c623cd93a3c0eb93c7bcfb8f5a01784` |
-| unisim-core | `1.7.15`; release commit `07cf9f9e591899cf7855e1b8f36020b6570cf002` |
-| FlashMimic task package | `e0a2b5c10f1b3815de0b830f5c035ae24e95171e` (`0.1.0`) |
-| FlashMimic `uv.lock` SHA-256 | `21448a97af54f0df2f6e6282acca9ecebd5c631278afbfae18f2ac28fed2e11e` |
-| Python | `3.13.15` |
-| PyTorch | `2.14.0` for latest UniLab; `2.14.1` for FlashMimic |
-| MuJoCo | `3.11.0` |
-| mjbatch-uni | `0.2.5` |
+UniLab and FlashMimic use separate environments because FlashMimic owns its
+task integration and dependency compatibility. No source compatibility patch
+is applied by this benchmark repository.
 
-`unilab-rl` and `unisim-core` are installed as immutable versioned wheels by
-the upstream frozen lockfiles. Their release commits are informational source
-mappings for those wheel releases; deployment enforcement is by exact wheel
-version and lockfile checksum. No lockfile is regenerated during setup.
+## Deploy on each Mac
 
-### Why there are two environments
+Requirements:
 
-The current UniLab `main` commit removed `TensorMotionCommand`, while the
-pinned current FlashMimic source still imports that symbol. Combining those two
-heads fails before training. The benchmark therefore uses:
-
-1. the latest pinned UniLab source and its frozen lock for SAC and FlashSAC;
-2. the pinned FlashMimic task source and its own frozen `uv.lock`, which selects the
-   compatible UniLab 1.3.4 release, for FlashMimic.
-
-This preserves upstream code and labels the tested task and algorithm honestly; no local
-compatibility patch is applied.
-
-## macOS deployment
-
-### Requirements
-
-- Apple Silicon Mac running macOS 27.0.1 or a compatible newer release;
-- Apple Command Line Tools (`xcode-select --install`);
+- Apple Silicon macOS with Command Line Tools;
 - `git`, `curl`, and network access to GitHub, PyPI, and the UniLab asset host;
 - at least 20 GiB free storage;
 - GitHub authorization for the private `Motphys/FlashMimic` repository.
 
-The upstream FlashMimic README currently claims Linux/NVIDIA support only.
-These runs evaluate its existing Apple MPS code path; they do not expand the
-upstream support claim. Its documentation's “CUDA MPS” means NVIDIA
-Multi-Process Service, not Apple Metal Performance Shaders. Do not run
-`uni-cumps` or set `training.cuda_process_sharing=mps` on macOS.
-
-### 1. Install uv and clone this bundle
+Install `uv` and clone this repository:
 
 ```bash
 xcode-select -p || xcode-select --install
@@ -85,61 +54,35 @@ git clone git@github.com:EtherealTide/UniLab-Mac-Optimization.git
 cd UniLab-Mac-Optimization
 ```
 
-### 2. Ensure access to FlashMimic
-
-The default setup clones `git@github.com:Motphys/FlashMimic.git`. Confirm that
-the logged-in account can read it:
+Confirm FlashMimic access, then deploy on the Mac mini:
 
 ```bash
 ssh -T git@github.com
-git ls-remote git@github.com:Motphys/FlashMimic.git \
-  e0a2b5c10f1b3815de0b830f5c035ae24e95171e
-```
+git ls-remote git@github.com:Motphys/FlashMimic.git HEAD
 
-For an offline/private transfer, create a bundle on an authorized host and copy
-it to the Mac:
-
-```bash
-git -C /path/to/FlashMimic bundle create FlashMimic-e0a2b5c.bundle \
-  e0a2b5c10f1b3815de0b830f5c035ae24e95171e
-scp FlashMimic-e0a2b5c.bundle user@mac:~/
-```
-
-Then set `FLASHMIMIC_BUNDLE` when running setup as shown below.
-
-### 3. Create the two frozen environments and prefetch assets
-
-Run this once on each Mac:
-
-```bash
 MACHINE_ID=mac-mini-m5-pro \
   ./scripts/setup_macos.sh "$HOME/unilab-mac-benchmark"
 ```
 
-Use `MACHINE_ID=mac-studio-m5-ultra` on the Studio. With a bundle:
+Use `MACHINE_ID=mac-studio-m5-ultra` on the Studio. The setup script refuses to
+update a dirty source checkout, fast-forwards both default branches, creates
+the two environments, downloads the G1 assets in both environments,
+materializes the motion asset, and records machine/runtime provenance.
+
+For a private/offline FlashMimic transfer, create a bundle on an authorized
+machine, copy it to the Mac, and pass it only for the initial clone:
 
 ```bash
-FLASHMIMIC_BUNDLE="$HOME/FlashMimic-e0a2b5c.bundle" \
+git -C /path/to/FlashMimic bundle create FlashMimic.bundle --all
+scp FlashMimic.bundle user@mac:~/
+
+FLASHMIMIC_BUNDLE="$HOME/FlashMimic.bundle" \
 MACHINE_ID=mac-mini-m5-pro \
   ./scripts/setup_macos.sh "$HOME/unilab-mac-benchmark"
 ```
 
-The script:
-
-- checks for Darwin/arm64 and Command Line Tools;
-- checks out the exact UniLab and FlashMimic commits in a dedicated directory;
-- installs Python 3.13.15 and synchronizes both frozen lockfiles;
-- fails closed on a dirty checkout, package mismatch, commit mismatch, or
-  unavailable Torch MPS backend;
-- prefetches G1 assets in **both** environments and materializes the motion file
-  before any timed run;
-- records `system_profiler`, package, Git, Python, toolchain, and MPS facts.
-
-Existing development checkouts are not touched.
-
-If a slow PyPI connection resets while downloading a large wheel, rerun the
-same frozen setup with longer transport retries; this does not change the lock
-or selected artifacts:
+If a large dependency download is interrupted, rerun setup with longer
+transport retries:
 
 ```bash
 UV_HTTP_TIMEOUT=600 UV_HTTP_RETRIES=10 \
@@ -147,13 +90,9 @@ MACHINE_ID=mac-mini-m5-pro \
   ./scripts/setup_macos.sh "$HOME/unilab-mac-benchmark"
 ```
 
-This retry was needed once on the tested Mac mini for the FlashMimic
-environment. The resumed sync still passed both lock checks and all exact
-package-version checks.
+## Smoke test
 
-### 4. Run smoke tests
-
-Smoke outputs are separate from report data:
+Smoke output is separate from formal result data:
 
 ```bash
 MACHINE_ID=mac-mini-m5-pro \
@@ -161,48 +100,41 @@ SMOKE_ROOT="$HOME/unilab-mac-benchmark/smoke/mac-mini-m5-pro" \
   ./scripts/smoke_test.sh
 ```
 
-Use the analogous Studio machine ID and path on that system. The smoke recipe
-uses 16 environments and three iterations to exercise asset loading, MuJoCo,
-MPS learning, logging, and finalization.
+The smoke test uses 16 environments and three iterations for each recipe. Use
+the analogous machine ID and path on the Studio.
 
-### 5. Run the formal 5,000-iteration protocol
+## Run the six training experiments
 
-Keep the Mac connected to AC power, select its high-performance power mode,
-close unrelated compute-heavy applications, and run:
+Keep each Mac on AC power in high-performance mode and close unrelated
+compute-heavy applications. On the mini run:
 
 ```bash
 MACHINE_ID=mac-mini-m5-pro ./scripts/run_unilab_benchmarks.sh
 ```
 
-On the Studio:
+On the Studio run:
 
 ```bash
 MACHINE_ID=mac-studio-m5-ultra ./scripts/run_unilab_benchmarks.sh
 ```
 
-The experiment matrix is in [`config/experiments.tsv`](config/experiments.tsv).
-All runs use seed 1, the owner configuration's 2048 environments, 5,000 training
-iterations, per-iteration TensorBoard logging, and `training.no_play=true`.
-Results are never overwritten. The scripts explicitly enable Rich's terminal
-mode while passing output through `tee`, so the panel refreshes live without a
-nested pseudo-terminal and the same terminal stream is saved to `console.log`.
-The three experiment rows run sequentially: the next trainer starts only after
-the previous trainer exits successfully, and each run has its own panel and
-result directory.
+The three rows execute sequentially and have independent result directories
+and live terminal panels. With no override, the runner reads the per-recipe
+defaults from [`config/experiments.tsv`](config/experiments.tsv): 5,000,
+25,000, and 60,000 iterations. All runs use seed 1, 2,048 environments,
+per-iteration TensorBoard logging, MuJoCo, and the MPS learner device selected
+by UniLab.
 
-Set `MAX_ITERATIONS` to change the training limit for every selected row. This
-maps directly to `algo.max_iterations`; it is a count of training iterations,
-not a target number of environment transitions. For example:
+`MAX_ITERATIONS` explicitly replaces the default for every selected row. For a
+quick 500-iteration protocol:
 
 ```bash
-MAX_ITERATIONS=1000 \
+MAX_ITERATIONS=500 \
 MACHINE_ID=mac-mini-m5-pro \
   ./scripts/run_unilab_benchmarks.sh
 ```
 
-Omitting `MAX_ITERATIONS` preserves the report's canonical 5,000-iteration
-protocol. The older `ITERATIONS_OVERRIDE` name remains accepted for backward
-compatibility. To run one row only:
+To run only one recipe:
 
 ```bash
 ONLY_EXPERIMENT=flashmimic_g1_motion_tracking \
@@ -210,9 +142,49 @@ MACHINE_ID=mac-studio-m5-ultra \
   ./scripts/run_unilab_benchmarks.sh
 ```
 
-## Collecting and analyzing results
+Result directories are never overwritten. Training uses
+`training.no_play=true`; video rendering is deliberately separate so playback
+does not contaminate the measured training wall time.
 
-From a workstation clone of this repository, collect the allowed artifacts:
+## Render the six final policy videos
+
+After all three training runs finish on each machine, render the final
+checkpoint from every run:
+
+```bash
+MACHINE_ID=mac-mini-m5-pro ./scripts/render_final_videos.sh
+```
+
+and on the Studio:
+
+```bash
+MACHINE_ID=mac-studio-m5-ultra ./scripts/render_final_videos.sh
+```
+
+The script selects the numerically latest `model_<iteration>.pt`, runs policy
+playback for 800 steps with one environment, and requires a non-empty
+`play_video.mp4`. It writes the MP4, playback log, and start/end metadata into
+each experiment directory. Use `VIDEO_STEPS=1200` to change video length,
+`ONLY_EXPERIMENT=...` to render one run, and `OVERWRITE_VIDEO=1` to explicitly
+replace an existing MP4.
+
+MuJoCo recording on macOS uses GLFW. Run the script from a logged-in macOS
+graphical session (a Terminal window is safest); a pure SSH session without a
+usable WindowServer may be unable to create frames. The expected six files on
+the benchmark hosts are:
+
+```text
+results/mac-mini-m5-pro/{sac_g1_walk_flat,flashsac_g1_motion_tracking,flashmimic_g1_motion_tracking}/play_video.mp4
+results/mac-studio-m5-ultra/{sac_g1_walk_flat,flashsac_g1_motion_tracking,flashmimic_g1_motion_tracking}/play_video.mp4
+```
+
+After collection, the same files live under
+`results/raw/<machine>/<experiment>/play_video.mp4` in this repository.
+
+## Collect and analyze
+
+From a workstation clone, collect each machine. The collector includes the
+final MP4 files but excludes checkpoints:
 
 ```bash
 ./scripts/collect_results.sh \
@@ -226,10 +198,8 @@ From a workstation clone of this repository, collect the allowed artifacts:
   results/raw/mac-studio-m5-ultra
 ```
 
-Copy the `machine-*.json` and `verify-*.json` files from each deployment root
-into `results/machines/`. The machine collection script removes stable hardware
-serial, UUID, and UDID fields because they are irrelevant to performance and
-unsafe to publish. Then render the processed CSV files and single figure:
+Copy the two `machine-*.json` files from each deployment root into
+`results/machines/`, then analyze:
 
 ```bash
 uv run \
@@ -238,62 +208,56 @@ uv run \
   scripts/analyze_results.py
 ```
 
-For a custom iteration limit, pass the same value to the validator, for
-example `scripts/analyze_results.py --expected-iterations 1000`.
+The analyzer requires the complete 2 × 3 matrix, the configured per-recipe
+iteration counts, dense `Train/mean_reward` events, successful run metadata,
+and all six non-empty videos. For a uniform custom run, pass the matching
+override, for example:
 
-The collector refuses to overwrite a non-empty destination and writes a
-`SHA256SUMS` manifest after transfer. The plot has three panels
-(`Loss/critic`, `Loss/actor`, and `Loss/temperature`). Color identifies the
-task/algorithm and line style identifies the machine. Each scalar event uses:
-
-```text
-elapsed_seconds = TensorBoard event.wall_time
-                  - benchmark_start.json["start_epoch_sec"]
+```bash
+uv run \
+  --with tensorboard==2.21.0 \
+  --with matplotlib==3.10.8 \
+  scripts/analyze_results.py --expected-iterations 500
 ```
 
-This includes process/CLI startup, environment construction, replay warm-up,
-and first compilation, not just the interval after the first loss sample. The
-wrapper timestamp has one-second resolution. A ten-sample rolling mean is
-used only for visualization; `results/processed/curves.csv` retains the raw
-scalar values.
+`--allow-missing-videos` is available only for intermediate analysis before
+playback artifacts have been collected; a report generated with it is not a
+complete submission artifact. Analysis generates:
 
-The reported steady-state throughput aggregates the latter half of the logged
-iterations:
+- `results/processed/curves.csv` with raw reward and performance scalars;
+- `results/processed/summary.csv` with validated run summaries;
+- `figures/reward_wall_clock.png` with six reward–wall-time curves;
+- `REPORT.md` with exactly the two requested result tables.
+
+Wall time for a scalar is its TensorBoard event timestamp minus the wrapper
+start time. This includes process startup, environment construction, replay
+warm-up, and compilation. The figure applies a ten-event rolling mean only for
+display; the CSV retains raw values.
+
+Steady-state throughput is the time-weighted rate over the latter half of the
+run:
 
 ```text
 tail-half steps/s = sum(environment-step deltas)
                     / sum(Perf/iteration_time)
 ```
 
-Step deltas are derived from adjacent TensorBoard global steps. This is a
-time-weighted rate (equivalently, the harmonic mean of per-iteration rates when
-every iteration has the same step count), not an arithmetic mean and not the
-last iteration's rate. `Perf/iteration_time` is recorded after MPS
-synchronization. End-to-end wrapper wall time remains a separate result that
-includes startup, warm-up, compilation, logging, checkpointing, and shutdown.
-
-Some long runs can contain an iteration whose logical environment-step counter
-does not advance. The analyzer counts that iteration's positive
-`Perf/iteration_time` in the denominator and uses a zero step delta in the
-numerator; it rejects negative step deltas. This preserves elapsed time without
-inflating throughput.
+This is not the final iteration's rate and not an unweighted arithmetic mean.
+Zero-step iterations retain their elapsed time in the denominator; negative
+step deltas are rejected as evidence of mixed or resumed event logs.
 
 ## Repository layout
 
 ```text
-config/                 exact pins and experiment matrix
-scripts/                deployment, verification, execution, collection, analysis
-results/raw/            canonical TensorBoard logs and run metadata
-results/machines/       hardware and runtime inventories
-results/processed/      extracted scalar and run summary CSV files
-figures/                loss versus wall-clock figure
-REPORT.md               protocol, results, interpretation, limitations
+config/experiments.tsv       experiment matrix and default iteration budgets
+scripts/setup_macos.sh       latest-source macOS deployment
+scripts/run_unilab_benchmarks.sh
+scripts/render_final_videos.sh
+scripts/collect_results.sh
+scripts/analyze_results.py
+results/raw/                 TensorBoard logs, metadata, console logs, six MP4s
+results/machines/            hardware and resolved runtime provenance
+results/processed/           generated curve and summary CSV files
+figures/reward_wall_clock.png
+REPORT.md                    generated figure plus two core tables
 ```
-
-## Interpretation boundary
-
-The 5,000-iteration window is a controlled hardware/runtime comparison, not a
-claim of policy convergence. SAC, FlashSAC, and FlashMimic do not share an
-identical objective or network, so raw loss magnitudes across different rows
-must not be read as an algorithm-quality ranking. The report therefore includes
-throughput and reward alongside the requested loss curves.

@@ -15,7 +15,7 @@ if [[ -d "$LOCAL_DEST" && -n "$(find "$LOCAL_DEST" -mindepth 1 -print -quit)" ]]
 fi
 mkdir -p "$LOCAL_DEST"
 
-# Checkpoints and videos are intentionally excluded from the publication repo.
+# Checkpoints stay on the training host; final policy videos are publication artifacts.
 rsync -az \
   --exclude='*_cold_asset_excluded/***' \
   --include='*/' \
@@ -24,7 +24,11 @@ rsync -az \
   --include='run_summary.json' \
   --include='benchmark_start.json' \
   --include='benchmark_end.json' \
+  --include='video_start.json' \
+  --include='video_end.json' \
   --include='console.log' \
+  --include='video_console.log' \
+  --include='play_video.mp4' \
   --exclude='*' \
   -e 'ssh -F /dev/null' \
   "$SSH_TARGET:$REMOTE_RESULTS_DIR/" "$LOCAL_DEST/"
