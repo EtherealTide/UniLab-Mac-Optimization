@@ -20,7 +20,7 @@ EXTRA_TAGS = ("Train/mean_reward", "Perf/total_fps", "Perf/iteration_time")
 ALGO_LABELS = {
     "sac_g1_walk_flat": "SAC · G1 walk flat",
     "flashsac_g1_motion_tracking": "FlashSAC · G1 motion tracking",
-    "flashmimic_g1_motion_tracking": "FlashMimic · G1 motion tracking",
+    "flashmimic_g1_motion_tracking": "FlashMimic task · g1_flash_mimic/mujoco · FlashSAC",
 }
 ALGO_COLORS = {
     "sac_g1_walk_flat": "#0072B2",

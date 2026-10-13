@@ -56,8 +56,8 @@ separately on the test host.
 | Mac Studio M5 Ultra | SAC / G1 walk flat | completed | 500 | 1,044,480 | 40.88 | 49 | 25,433.45 | 15.9735 |
 | Mac mini M5 Pro | FlashSAC / G1 motion tracking | completed | 500 | 1,224,704 | 71.96 | 102 | 14,338.46 | 1.0364 |
 | Mac Studio M5 Ultra | FlashSAC / G1 motion tracking | completed | 500 | 1,224,704 | 34.51 | 55 | 30,628.15 | 0.9746 |
-| Mac mini M5 Pro | FlashMimic / G1 motion tracking | completed | 500 | 1,224,704 | 141.66 | 172 | 7,371.79 | 1.4907 |
-| Mac Studio M5 Ultra | FlashMimic / G1 motion tracking | completed | 500 | 1,224,704 | 70.40 | 88 | 14,860.87 | 1.6286 |
+| Mac mini M5 Pro | FlashMimic task `g1_flash_mimic/mujoco` using FlashSAC | completed | 500 | 1,224,704 | 141.66 | 172 | 7,371.79 | 1.4907 |
+| Mac Studio M5 Ultra | FlashMimic task `g1_flash_mimic/mujoco` using FlashSAC | completed | 500 | 1,224,704 | 70.40 | 88 | 14,860.87 | 1.6286 |
 
 `Training wall time` is `run_summary.json.training_wall_time_sec`.
 `End-to-end wall time` is the benchmark wrapper's integer-second interval from
@@ -67,7 +67,7 @@ before CLI process launch through successful process exit.
 |---|---:|---:|---:|
 | SAC / G1 walk flat | 2.47× | 72.9% | 69.9% |
 | FlashSAC / G1 motion tracking | 2.14× | 52.0% | 46.1% |
-| FlashMimic / G1 motion tracking | 2.02× | 50.3% | 48.8% |
+| FlashMimic task `g1_flash_mimic/mujoco` using FlashSAC | 2.02× | 50.3% | 48.8% |
 
 The requested loss figure contains critic, actor, and temperature loss panels.
 Curves use a ten-event rolling mean for readability. The extracted unsmoothed
@@ -77,22 +77,25 @@ events are published in `results/processed/curves.csv`.
 
 The performance comparison should use wall time, environment-step throughput,
 and within-recipe curve progression. Loss magnitude itself is not comparable
-across SAC, FlashSAC, and FlashMimic: their objectives, observation/action
-handling, and networks differ. FlashMimic is a motion-tracking task package
-whose learner is FlashSAC, rather than a third standalone learner algorithm.
+across SAC, FlashSAC, and the FlashMimic task: their objectives,
+observation/action handling, and networks differ. FlashMimic is a G1
+whole-body motion-imitation task package whose learner is FlashSAC, rather than
+a third standalone learner algorithm. The canonical task owner is
+`g1_flash_mimic/mujoco`; its configuration points to the packaged motion file
+`dance1_subject2_part.npz`.
 
 Within each matched recipe, the two machines reached similar loss scales after
 the same iteration/step budget while the Studio completed sooner. The final
 critic loss was 3.716/3.834 (mini/Studio) for SAC, 2.859/2.873 for FlashSAC,
-and 2.578/2.570 for FlashMimic. These close endpoints are an execution
+and 2.578/2.570 for the FlashMimic task. These close endpoints are an execution
 consistency check, not proof that the learned policies are equivalent.
 
 SAC shows the largest end-to-end gap: the Studio shortened the 500-iteration
 wrapper interval from 163 s to 49 s. Its final steady-state throughput advantage
 (2.47×) is smaller than the bounded-window training-time advantage (3.69×),
 which shows that startup/compilation overhead is material at this short budget.
-FlashSAC and FlashMimic show approximately twofold throughput and training-time
-differences.
+FlashSAC and the FlashMimic task show approximately twofold throughput and
+training-time differences.
 
 Five hundred iterations are sufficient to compare startup and steady-state
 execution under a fixed recipe, but not to establish final policy quality or

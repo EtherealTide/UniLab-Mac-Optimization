@@ -7,13 +7,15 @@ runs on two Apple Silicon systems:
 |---|---:|---:|
 | SAC + MuJoCo + `g1_walk_flat` | M5 Pro | M5 Ultra |
 | FlashSAC + MuJoCo + `g1_motion_tracking` | M5 Pro | M5 Ultra |
-| FlashMimic + MuJoCo + `g1_flash_mimic` | M5 Pro | M5 Ultra |
+| FlashMimic task (`g1_flash_mimic/mujoco`) using FlashSAC | M5 Pro | M5 Ultra |
 
 The Mac Studio was described as both “M5 Max” and “M5 Ultra” in the original
 request. `system_profiler` identifies the tested machine as **Apple M5 Ultra**,
 so this repository uses that hardware-reported name. “flashmiic” was interpreted
-as the official `Motphys/FlashMimic` task package; FlashMimic uses FlashSAC and
-is not a separate learner algorithm.
+as the official `Motphys/FlashMimic` task package. FlashMimic uses FlashSAC and
+is not a separate learner algorithm. Its canonical MuJoCo task is
+`g1_flash_mimic/mujoco`; the pinned owner configuration tracks the packaged
+G1 motion asset `dance1_subject2_part.npz`.
 
 The measured results, plots, methodology, and limitations are in
 [REPORT.md](REPORT.md). Raw TensorBoard logs and run metadata are kept under
@@ -31,7 +33,7 @@ benchmark pins the following immutable inputs:
 | UniLab `uv.lock` SHA-256 | `1a87e4041976fbdb3a1d862db0ef3fa9545c7976f714e4aa93b77c9cf43d1741` |
 | unilab-rl | `1.4.11`; release commit `739986e63c623cd93a3c0eb93c7bcfb8f5a01784` |
 | unisim-core | `1.7.15`; release commit `07cf9f9e591899cf7855e1b8f36020b6570cf002` |
-| FlashMimic | `e0a2b5c10f1b3815de0b830f5c035ae24e95171e` (`0.1.0`) |
+| FlashMimic task package | `e0a2b5c10f1b3815de0b830f5c035ae24e95171e` (`0.1.0`) |
 | FlashMimic `uv.lock` SHA-256 | `21448a97af54f0df2f6e6282acca9ecebd5c631278afbfae18f2ac28fed2e11e` |
 | Python | `3.13.15` |
 | PyTorch | `2.14.0` for latest UniLab; `2.14.1` for FlashMimic |
@@ -50,10 +52,10 @@ pinned current FlashMimic source still imports that symbol. Combining those two
 heads fails before training. The benchmark therefore uses:
 
 1. the latest pinned UniLab source and its frozen lock for SAC and FlashSAC;
-2. the pinned FlashMimic source and its own frozen `uv.lock`, which selects the
+2. the pinned FlashMimic task source and its own frozen `uv.lock`, which selects the
    compatible UniLab 1.3.4 release, for FlashMimic.
 
-This preserves upstream code and labels the tested inputs honestly; no local
+This preserves upstream code and labels the tested task and algorithm honestly; no local
 compatibility patch is applied.
 
 ## macOS deployment
