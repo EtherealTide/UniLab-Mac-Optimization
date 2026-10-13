@@ -17,10 +17,6 @@ if [[ -e "$SMOKE_ROOT" ]]; then
   echo "Refusing to overwrite existing smoke output: $SMOKE_ROOT" >&2
   exit 1
 fi
-if [[ ! -x /usr/bin/script ]]; then
-  echo "Missing /usr/bin/script; a pseudo-terminal is required for live training output." >&2
-  exit 1
-fi
 mkdir -p "$SMOKE_ROOT"
 
 common_overrides=(
@@ -35,22 +31,25 @@ common_overrides=(
   training.no_play=true
 )
 
-/usr/bin/script -qF "$SMOKE_ROOT/sac_g1_walk_flat.log" \
+env FORCE_COLOR=1 TTY_INTERACTIVE=1 \
   uv run --directory "$UNILAB_DIR" --frozen --no-sync train \
   --algo sac --task g1_walk_flat --sim mujoco \
   "${common_overrides[@]}" \
-  "training.log_dir=$SMOKE_ROOT/sac_g1_walk_flat"
+  "training.log_dir=$SMOKE_ROOT/sac_g1_walk_flat" \
+  2>&1 | tee "$SMOKE_ROOT/sac_g1_walk_flat.log"
 
-/usr/bin/script -qF "$SMOKE_ROOT/flashsac_g1_motion_tracking.log" \
+env FORCE_COLOR=1 TTY_INTERACTIVE=1 \
   uv run --directory "$UNILAB_DIR" --frozen --no-sync train \
   --algo flashsac --task g1_motion_tracking --sim mujoco \
   "${common_overrides[@]}" \
-  "training.log_dir=$SMOKE_ROOT/flashsac_g1_motion_tracking"
+  "training.log_dir=$SMOKE_ROOT/flashsac_g1_motion_tracking" \
+  2>&1 | tee "$SMOKE_ROOT/flashsac_g1_motion_tracking.log"
 
-/usr/bin/script -qF "$SMOKE_ROOT/flashmimic_g1_motion_tracking.log" \
+env FORCE_COLOR=1 TTY_INTERACTIVE=1 \
   uv run --directory "$FLASHMIMIC_DIR" --frozen --no-sync flashmimic-train \
   task=g1_flash_mimic/mujoco \
   "${common_overrides[@]}" \
-  "training.log_dir=$SMOKE_ROOT/flashmimic_g1_motion_tracking"
+  "training.log_dir=$SMOKE_ROOT/flashmimic_g1_motion_tracking" \
+  2>&1 | tee "$SMOKE_ROOT/flashmimic_g1_motion_tracking.log"
 
 echo "All three smoke tests completed on $MACHINE_ID"

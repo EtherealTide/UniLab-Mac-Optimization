@@ -183,9 +183,9 @@ MACHINE_ID=mac-studio-m5-ultra ./scripts/run_unilab_benchmarks.sh
 The experiment matrix is in [`config/experiments.tsv`](config/experiments.tsv).
 All runs use seed 1, the owner configuration's 2048 environments, 500 training
 iterations, per-iteration TensorBoard logging, and `training.no_play=true`.
-Results are never overwritten. The scripts run each trainer under macOS's
-`/usr/bin/script` pseudo-terminal, so the Rich panel refreshes live while the
-same terminal stream is saved to `console.log`.
+Results are never overwritten. The scripts explicitly enable Rich's terminal
+mode while passing output through `tee`, so the panel refreshes live without a
+nested pseudo-terminal and the same terminal stream is saved to `console.log`.
 The three experiment rows run sequentially: the next trainer starts only after
 the previous trainer exits successfully, and each run has its own panel and
 result directory.

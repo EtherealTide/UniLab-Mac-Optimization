@@ -44,11 +44,6 @@ if [[ ! -d "$UNILAB_DIR/.git" ]]; then
   echo "Missing deployment at $UNILAB_DIR; run scripts/setup_macos.sh first." >&2
   exit 1
 fi
-if [[ ! -x /usr/bin/script ]]; then
-  echo "Missing /usr/bin/script; a pseudo-terminal is required for live training output." >&2
-  exit 1
-fi
-
 uv run --directory "$UNILAB_DIR" --frozen --no-sync python \
   "$BENCHMARK_REPO/scripts/verify_environment.py" \
   --repo "$UNILAB_DIR" \
@@ -116,14 +111,15 @@ while IFS=$'\t' read -r experiment_id entrypoint algo task sim default_iteration
     echo "Unknown entrypoint '$entrypoint' for $experiment_id" >&2
     exit 2
   fi
-  /usr/bin/script -qF "$run_dir/console.log" "${train_command[@]}" \
+  env FORCE_COLOR=1 TTY_INTERACTIVE=1 "${train_command[@]}" \
       "algo.seed=$SEED" \
       "algo.max_iterations=$iterations" \
       "algo.save_interval=$iterations" \
       training.log_interval=1 \
       training.no_play=true \
-      "training.log_dir=$run_dir"
-  train_status="$?"
+      "training.log_dir=$run_dir" \
+      2>&1 | tee "$run_dir/console.log"
+  train_status="${PIPESTATUS[0]}"
   set -e
 
   end_utc="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
