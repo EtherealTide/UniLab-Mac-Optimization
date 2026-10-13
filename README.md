@@ -186,6 +186,9 @@ iterations, per-iteration TensorBoard logging, and `training.no_play=true`.
 Results are never overwritten. The scripts run each trainer under macOS's
 `/usr/bin/script` pseudo-terminal, so the Rich panel refreshes live while the
 same terminal stream is saved to `console.log`.
+The three experiment rows run sequentially: the next trainer starts only after
+the previous trainer exits successfully, and each run has its own panel and
+result directory.
 
 Set `MAX_ITERATIONS` to change the training limit for every selected row. This
 maps directly to `algo.max_iterations`; it is a count of training iterations,

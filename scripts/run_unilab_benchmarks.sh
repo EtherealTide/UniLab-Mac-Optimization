@@ -76,7 +76,7 @@ uv run --directory "$FLASHMIMIC_DIR" --frozen --no-sync python \
   --mujoco-version "$MUJOCO_VERSION"
 
 mkdir -p "$RESULTS_ROOT/$MACHINE_ID"
-while IFS=$'\t' read -r experiment_id entrypoint algo task sim default_iterations; do
+while IFS=$'\t' read -r experiment_id entrypoint algo task sim default_iterations <&3; do
   [[ -z "$experiment_id" || "$experiment_id" == \#* ]] && continue
   if [[ -n "$ONLY_EXPERIMENT" && "$experiment_id" != "$ONLY_EXPERIMENT" ]]; then
     continue
@@ -141,4 +141,4 @@ while IFS=$'\t' read -r experiment_id entrypoint algo task sim default_iteration
     echo "$experiment_id failed with exit code $train_status" >&2
     exit "$train_status"
   fi
-done <"$BENCHMARK_REPO/config/experiments.tsv"
+done 3<"$BENCHMARK_REPO/config/experiments.tsv"
