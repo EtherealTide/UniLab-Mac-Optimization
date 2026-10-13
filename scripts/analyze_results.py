@@ -91,6 +91,8 @@ def _load_versions(path: Path) -> dict[str, str]:
 
 def _tail_half_throughput(
     iteration_events: list[dict[str, Any]],
+    *,
+    run_dir: Path | None = None,
 ) -> dict[str, int | float]:
     """Aggregate environment-step throughput over the latter half of a run."""
     if len(iteration_events) < 2:
@@ -101,12 +103,20 @@ def _tail_half_throughput(
     previous_step = int(iteration_events[start - 1]["step"])
     total_steps = 0
     total_time = 0.0
-    for event in selected:
+    for selected_index, event in enumerate(selected, start=start):
         step = int(event["step"])
         step_delta = step - previous_step
         iteration_time = float(event["value"])
         if step_delta <= 0:
-            raise RuntimeError(f"non-positive TensorBoard step delta: {step_delta}")
+            context = f" in {run_dir}" if run_dir is not None else ""
+            raise RuntimeError(
+                f"non-positive TensorBoard step delta: {step_delta}{context}; "
+                f"previous_step={previous_step}, step={step}, "
+                f"event_index={selected_index}. The event log "
+                "contains a duplicate or non-monotonic Perf/iteration_time step; "
+                "recollect this run into an empty result directory rather than "
+                "combining/resuming event files."
+            )
         if iteration_time <= 0:
             raise RuntimeError(f"non-positive iteration time: {iteration_time}")
         total_steps += step_delta
@@ -213,16 +223,47 @@ def _load_run(
     by_metric: dict[str, list[dict[str, Any]]] = defaultdict(list)
     for row in rows:
         by_metric[row["metric"]].append(row)
+    raw_iteration_events = by_metric.get("Perf/iteration_time", [])
+    if len(raw_iteration_events) != expected_count:
+        raise RuntimeError(
+            f"expected {expected_count} iteration-time samples in {run_dir}, "
+            f"found {len(raw_iteration_events)}"
+        )
+    duplicate_steps: dict[int, list[tuple[int, float, float]]] = defaultdict(list)
+    previous_step: int | None = None
+    previous_wall_time: float | None = None
+    for event_index, event in enumerate(raw_iteration_events):
+        step = int(event["step"])
+        wall_time = float(event["wall_time_sec"])
+        value = float(event["value"])
+        duplicate_steps[step].append((event_index, wall_time, value))
+        if value <= 0:
+            raise RuntimeError(
+                f"non-positive iteration time in {run_dir}: event_index="
+                f"{event_index}, step={step}, value={value}"
+            )
+        if previous_step is not None and step <= previous_step:
+            detail = duplicate_steps[step]
+            raise RuntimeError(
+                f"Perf/iteration_time steps are not strictly increasing in {run_dir}: "
+                f"event_index={event_index}, previous_step={previous_step}, "
+                f"step={step}, records_for_step={detail}. This usually means the "
+                "run was resumed or logs from multiple attempts were combined; "
+                "recollect into a fresh result directory."
+            )
+        if previous_wall_time is not None and wall_time < previous_wall_time:
+            raise RuntimeError(
+                f"Perf/iteration_time wall times are not monotonic in {run_dir}: "
+                f"event_index={event_index}, previous_wall_time={previous_wall_time}, "
+                f"wall_time={wall_time}, step={step}"
+            )
+        previous_step = step
+        previous_wall_time = wall_time
     for values in by_metric.values():
         values.sort(key=lambda item: (item["step"], item["wall_time_sec"]))
 
     iteration_events = by_metric.get("Perf/iteration_time", [])
-    if len(iteration_events) != expected_count:
-        raise RuntimeError(
-            f"expected {expected_count} iteration-time samples in {run_dir}, "
-            f"found {len(iteration_events)}"
-        )
-    tail_half = _tail_half_throughput(iteration_events)
+    tail_half = _tail_half_throughput(iteration_events, run_dir=run_dir)
 
     result_summary: dict[str, Any] = {
         "machine": machine,
