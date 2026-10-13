@@ -3,12 +3,8 @@
 ## Executive summary
 
 This report covers six pinned UniLab-family MuJoCo training runs: three
-experiment recipes on a Mac mini with Apple M5 Pro and on a Mac Studio that
-`system_profiler` identifies as Apple M5 Ultra. All canonical runs completed
-with Torch's Apple MPS backend available. The 500-iteration protocol measures a
-bounded end-to-end performance window; it is not a convergence study. Across
-matched recipes, the M5 Ultra Studio delivered **2.03–2.48× the tail-half
-environment-step throughput** and reduced wrapper wall time by **41.4–55.6%**.
+experiment recipes on a Mac mini with Apple M5 Pro and on a Mac Studio with Apple M5 Ultra. All canonical runs completed
+with Torch's Apple MPS backend available. Across recipes, the M5 Ultra Studio delivered **2.03–2.48× the tail-half environment-step throughput** and reduced wrapper wall time by **41.4–55.6%**.
 
 ![Loss versus wall-clock time](figures/loss_wall_clock.png)
 
