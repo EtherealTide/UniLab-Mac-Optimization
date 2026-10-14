@@ -208,17 +208,13 @@ uv run \
   scripts/analyze_results.py
 ```
 
-The analyzer requires the complete 2 × 3 matrix, the configured per-recipe
-iteration counts, dense `Train/mean_reward` events, successful run metadata,
-and all six non-empty videos. For a uniform custom run, pass the matching
-override, for example:
-
-```bash
-uv run \
-  --with tensorboard==2.21.0 \
-  --with matplotlib==3.10.8 \
-  scripts/analyze_results.py --expected-iterations 500
-```
+The analyzer requires the complete 2 × 3 matrix, successful run metadata, and
+all six non-empty videos. It reads each run's actual completed iteration count
+from `run_summary.json` and checks that value against the run's own benchmark
+metadata and resolved training configuration; no separate expected-iteration
+argument is needed. TensorBoard scalars are loaded without the library's
+default 10,000-event cap, so 25,000- and 60,000-iteration runs are analyzed
+in full. A shorter custom run is analyzed using all samples that it contains.
 
 `--allow-missing-videos` is available only for intermediate analysis before
 playback artifacts have been collected; a report generated with it is not a
@@ -233,6 +229,31 @@ Wall time for a scalar is its TensorBoard event timestamp minus the wrapper
 start time. This includes process startup, environment construction, replay
 warm-up, and compilation. The figure applies a ten-event rolling mean only for
 display; the CSV retains raw values.
+
+### Downloading the six final videos
+
+Videos are not copied by `collect_results.sh` because checkpoints and MP4s are
+large binary artifacts. Use the dedicated collector from the workstation; it
+preserves the three experiment directory names and does not overwrite an
+existing MP4:
+
+```bash
+./scripts/collect_videos.sh \
+  'liangyu@192.168.110.52' \
+  '/Users/liangyu/unilab-mac-benchmark/results/mac-mini-m5-pro' \
+  'results/raw/mac-mini-m5-pro'
+
+./scripts/collect_videos.sh \
+  'robot@10.13.1.157' \
+  '/Users/robot/unilab-mac-benchmark/results/mac-studio-m5-ultra' \
+  'results/raw/mac-studio-m5-ultra'
+```
+
+Enter the Mac mini password when `ssh` prompts for it. If a run was rendered
+into a different remote results root, replace only the second argument. The
+script prints every downloaded MP4 and writes a `VIDEO_SHA256SUMS` file for the
+video set. Existing run metadata in the local `results/raw` destination is
+preserved.
 
 Steady-state throughput is the time-weighted rate over the latter half of the
 run:

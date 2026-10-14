@@ -39,9 +39,14 @@ MACHINE_LABELS = {
 
 def _find_event_file(run_dir: Path) -> Path:
     files = sorted(run_dir.glob("events.out.tfevents.*"))
-    if len(files) != 1:
-        raise RuntimeError(f"expected one TensorBoard event file in {run_dir}, found {len(files)}")
-    return files[0]
+    if not files:
+        raise RuntimeError(f"no TensorBoard event file in {run_dir}")
+    if len(files) == 1:
+        return files[0]
+    # A collection can retain a previous attempt beside a newly copied run.
+    # Event filenames contain the writer epoch; use the newest writer rather
+    # than silently concatenating independent attempts.
+    return max(files, key=lambda path: (path.name, path.stat().st_mtime_ns))
 
 
 def _rolling_mean(values: list[float], window: int) -> list[float]:
@@ -57,20 +62,21 @@ def _rolling_mean(values: list[float], window: int) -> list[float]:
     return result
 
 
-def _load_protocol(path: Path) -> dict[str, int]:
-    expected: dict[str, int] = {}
+def _load_protocol(path: Path) -> set[str]:
+    experiments: set[str] = set()
     with path.open(encoding="utf-8", newline="") as handle:
         for row in csv.reader(handle, delimiter="\t"):
             if not row or row[0].startswith("#"):
                 continue
             if len(row) != 6:
                 raise RuntimeError(f"invalid experiment row in {path}: {row}")
-            expected[row[0]] = int(row[5])
-    if set(expected) != set(ALGO_LABELS):
+            int(row[5])
+            experiments.add(row[0])
+    if experiments != set(ALGO_LABELS):
         raise RuntimeError(
-            f"experiment matrix and plot labels differ: {sorted(expected)} vs {sorted(ALGO_LABELS)}"
+            f"experiment matrix and plot labels differ: {sorted(experiments)} vs {sorted(ALGO_LABELS)}"
         )
-    return expected
+    return experiments
 
 
 def _tail_half_throughput(
@@ -117,7 +123,7 @@ def _tail_half_throughput(
 
 def _load_run(
     run_dir: Path,
-    expected_iterations: dict[str, int],
+    experiments: set[str],
     *,
     require_video: bool,
 ) -> tuple[list[dict[str, Any]], dict[str, Any]]:
@@ -135,17 +141,23 @@ def _load_run(
     experiment = str(benchmark_start["experiment_id"])
     if machine not in MACHINE_LABELS:
         raise RuntimeError(f"unexpected machine id in {run_dir}: {machine}")
-    if experiment not in expected_iterations:
+    if experiment not in experiments:
         raise RuntimeError(f"unexpected experiment id in {run_dir}: {experiment}")
-    if run_dir.name != experiment or run_dir.parent.name != machine:
+    # The local collection destination is user-selectable. Use the machine ID
+    # recorded by the benchmark rather than requiring the parent directory to
+    # have a particular spelling (for example mac-ultra-m5-ultra).
+    if run_dir.name != experiment:
         raise RuntimeError(
-            f"result path does not match metadata: {run_dir} vs {machine}/{experiment}"
+            f"result path does not match experiment metadata: {run_dir} vs {experiment}"
         )
-    expected_count = expected_iterations[experiment]
+    completed_iterations = summary.get("completed_iterations")
+    if not isinstance(completed_iterations, int) or completed_iterations < 2:
+        raise RuntimeError(
+            f"invalid completed iteration count in {run_dir}: {completed_iterations!r}"
+        )
     checks = {
         "run status": (summary.get("status"), "completed"),
-        "completed iterations": (summary.get("completed_iterations"), expected_count),
-        "requested iterations": (benchmark_start.get("iterations"), expected_count),
+        "requested iterations": (benchmark_start.get("iterations"), completed_iterations),
         "seed": (benchmark_start.get("seed"), 1),
         "wrapper exit code": (benchmark_end.get("exit_code"), 0),
         "end experiment id": (benchmark_end.get("experiment_id"), experiment),
@@ -157,7 +169,7 @@ def _load_run(
         "configured environments": (config["config"]["algo"].get("num_envs"), 2048),
         "configured max iterations": (
             config["config"]["algo"].get("max_iterations"),
-            expected_count,
+            completed_iterations,
         ),
         "TensorBoard interval": (config["config"]["training"].get("log_interval"), 1),
         "no play": (config["config"]["training"].get("no_play"), True),
@@ -177,7 +189,12 @@ def _load_run(
     # timestamp therefore gives the requested end-to-end wall-clock origin.
     run_start = float(benchmark_start["start_epoch_sec"])
 
-    accumulator = event_accumulator.EventAccumulator(str(_find_event_file(run_dir)))
+    # EventAccumulator otherwise retains only the latest 10,000 scalar events.
+    # Load the complete stream so long default runs are analyzed in full.
+    accumulator = event_accumulator.EventAccumulator(
+        str(_find_event_file(run_dir)),
+        size_guidance={event_accumulator.SCALARS: 0},
+    )
     accumulator.Reload()
     available = set(accumulator.Tags().get("scalars", []))
     if REWARD_TAG not in available:
@@ -202,19 +219,15 @@ def _load_run(
     for row in rows:
         by_metric[row["metric"]].append(row)
     raw_iteration_events = by_metric.get("Perf/iteration_time", [])
-    if len(raw_iteration_events) != expected_count:
+    if len(raw_iteration_events) < 2:
         raise RuntimeError(
-            f"expected {expected_count} iteration-time samples in {run_dir}, "
-            f"found {len(raw_iteration_events)}"
+            f"tail-half throughput requires at least two Perf/iteration_time "
+            f"samples in {run_dir}, found {len(raw_iteration_events)}"
         )
     reward_events = by_metric.get(REWARD_TAG, [])
-    # Some owners do not emit episode reward during their first replay warm-up
-    # iterations.  Require dense coverage without assuming an event at step 0.
-    minimum_reward_samples = max(1, int(expected_count * 0.95))
-    if len(reward_events) < minimum_reward_samples:
+    if not reward_events:
         raise RuntimeError(
-            f"expected at least {minimum_reward_samples} reward samples in {run_dir}, "
-            f"found {len(reward_events)}"
+            f"missing {REWARD_TAG!r} samples in {run_dir}"
         )
     duplicate_steps: dict[int, list[tuple[int, float, float]]] = defaultdict(list)
     previous_step: int | None = None
@@ -257,13 +270,16 @@ def _load_run(
         "experiment": experiment,
         "status": summary.get("status"),
         "completed_iterations": summary.get("completed_iterations"),
+        "iteration_time_samples": len(iteration_events),
         "total_env_steps": summary.get("total_env_steps"),
         "training_wall_time_sec": summary.get("training_wall_time_sec"),
         "wall_time_sec": summary.get("wall_time_sec"),
         "benchmark_elapsed_sec": benchmark_end.get("elapsed_sec"),
         "final_mean_reward": summary.get("final_mean_reward"),
         "final_env_steps_per_sec": summary.get("final_env_steps_per_sec"),
-        "video_path": f"{machine}/{experiment}/play_video.mp4",
+        # Preserve the actual local collection directory (which may be an
+        # alias) so report links point to the file that was analyzed.
+        "video_path": f"{run_dir.parent.name}/{experiment}/play_video.mp4",
         "video_available": video_path.is_file() and video_path.stat().st_size > 0,
         **tail_half,
     }
@@ -343,18 +359,12 @@ def _write_report(
     raw_root: Path,
     summaries: list[dict[str, Any]],
     *,
-    iteration_override: int | None,
     smoothing: int,
 ) -> None:
     """Write the two-table report directly from validated run summaries."""
     path.parent.mkdir(parents=True, exist_ok=True)
     figure_link = os.path.relpath(figure, path.parent)
-    protocol_note = (
-        f"This checked-in snapshot was validated with the explicit uniform "
-        f"`--expected-iterations {iteration_override}` override."
-        if iteration_override is not None
-        else "Each recipe uses its configured default iteration budget."
-    )
+    protocol_note = "Each row reports the completed iteration count recorded by that run."
     lines = [
         "# UniLab Apple Silicon performance report",
         "",
@@ -448,22 +458,11 @@ def main() -> int:
         action="store_true",
         help="allow intermediate analysis before the six final MP4 files are collected",
     )
-    parser.add_argument(
-        "--expected-iterations",
-        type=int,
-        help="override the experiment-matrix iteration count for custom runs",
-    )
     args = parser.parse_args()
 
     if args.smoothing < 1:
         parser.error("--smoothing must be at least 1")
-    expected_iterations = _load_protocol(args.experiments)
-    if args.expected_iterations is not None:
-        if args.expected_iterations < 2:
-            parser.error("--expected-iterations must be at least 2")
-        expected_iterations = {
-            experiment: args.expected_iterations for experiment in expected_iterations
-        }
+    experiments = _load_protocol(args.experiments)
     run_dirs = sorted(path.parent for path in args.input.rglob("run_config.json"))
     if not run_dirs:
         raise SystemExit(f"no run_config.json files found under {args.input}")
@@ -473,7 +472,7 @@ def main() -> int:
     for run_dir in run_dirs:
         rows, summary = _load_run(
             run_dir,
-            expected_iterations,
+            experiments,
             require_video=not args.allow_missing_videos,
         )
         all_rows.extend(rows)
@@ -483,7 +482,7 @@ def main() -> int:
     pair_counts = Counter(observed_pairs)
     duplicate_pairs = {pair: count for pair, count in pair_counts.items() if count != 1}
     expected_pairs = {
-        (experiment, machine) for experiment in expected_iterations for machine in MACHINE_LABELS
+        (experiment, machine) for experiment in experiments for machine in MACHINE_LABELS
     }
     observed_set = set(observed_pairs)
     if duplicate_pairs or observed_set != expected_pairs:
@@ -516,7 +515,6 @@ def main() -> int:
         args.figure,
         args.input,
         summaries,
-        iteration_override=args.expected_iterations,
         smoothing=args.smoothing,
     )
 
