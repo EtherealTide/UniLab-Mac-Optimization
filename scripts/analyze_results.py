@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Any
 
 import matplotlib.pyplot as plt
+from matplotlib.colors import to_hex, to_rgb
 from tensorboard.backend.event_processing import event_accumulator
 
 REWARD_TAG = "Train/mean_reward"
@@ -35,6 +36,18 @@ MACHINE_LABELS = {
     "mac-mini-m5-pro": "Mac mini M5 Pro",
     "mac-studio-m5-ultra": "Mac Studio M5 Ultra",
 }
+MACHINE_COLOR_LIGHTNESS = {
+    "mac-mini-m5-pro": 0.48,
+    "mac-studio-m5-ultra": 0.0,
+}
+
+
+def _machine_color(experiment: str, machine: str) -> str:
+    """Return a light/dark shade of the experiment's base color."""
+    amount = MACHINE_COLOR_LIGHTNESS[machine]
+    base = to_rgb(ALGO_COLORS[experiment])
+    shaded = tuple(channel + (1.0 - channel) * amount for channel in base)
+    return to_hex(shaded)
 
 
 def _find_event_file(run_dir: Path) -> Path:
@@ -326,7 +339,7 @@ def _plot(rows: list[dict[str, Any]], output: Path, smoothing: int) -> None:
             axis.plot(
                 x,
                 y,
-                color=ALGO_COLORS[experiment],
+                color=_machine_color(experiment, machine),
                 linestyle=MACHINE_STYLES[machine],
                 linewidth=2.0,
                 label=MACHINE_LABELS[machine],
