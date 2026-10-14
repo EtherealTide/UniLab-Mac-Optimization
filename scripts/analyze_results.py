@@ -338,21 +338,14 @@ def _plot(rows: list[dict[str, Any]], output: Path, smoothing: int) -> None:
         axis.set_xlim(0.0, max(1.0, panel_max_minutes * 1.05))
         axis.set_xlabel("Wall-clock time from benchmark start (minutes)")
         axis.grid(True, alpha=0.25)
-    handles, labels = axes[0].get_legend_handles_labels()
-    if handles:
-        fig.legend(
-            handles,
-            labels,
-            loc="upper center",
-            bbox_to_anchor=(0.5, 0.95),
-            ncol=2,
-            frameon=False,
-        )
+        handles, labels = axis.get_legend_handles_labels()
+        if handles:
+            axis.legend(loc="upper right", frameon=False, ncol=2)
     fig.suptitle(
         f"UniLab mean reward vs wall-clock time (rolling mean, n={smoothing})",
         fontsize=15,
     )
-    fig.tight_layout(rect=(0, 0, 1, 0.91))
+    fig.tight_layout(rect=(0, 0, 1, 0.96))
     output.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(output, dpi=180, bbox_inches="tight")
     plt.close(fig)
