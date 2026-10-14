@@ -222,13 +222,17 @@ complete submission artifact. Analysis generates:
 
 - `results/processed/curves.csv` with raw reward and performance scalars;
 - `results/processed/summary.csv` with validated run summaries;
-- `figures/reward_wall_clock.png` with six reward–wall-time curves;
+- `figures/reward_wall_clock.png` with six reward–wall-time curves; each
+  recipe panel uses its own wall-clock range so shorter SAC/FlashSAC runs are
+  not compressed by the longer FlashMimic run;
 - `REPORT.md` with exactly the two requested result tables.
 
 Wall time for a scalar is its TensorBoard event timestamp minus the wrapper
 start time. This includes process startup, environment construction, replay
 warm-up, and compilation. The figure applies a ten-event rolling mean only for
-display; the CSV retains raw values.
+display; the CSV retains raw values. The three panels intentionally use
+independent x-axis limits, each ending shortly after that recipe's latest
+event.
 
 ### Downloading the six final videos
 

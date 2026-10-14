@@ -310,13 +310,19 @@ def _plot(rows: list[dict[str, Any]], output: Path, smoothing: int) -> None:
         if row["metric"] == REWARD_TAG:
             grouped[(row["experiment"], row["machine"])].append(row)
 
-    fig, axes = plt.subplots(len(ALGO_LABELS), 1, figsize=(14, 12), sharex=True)
+    # Each recipe has a different default iteration budget and therefore a
+    # different wall-clock duration. Keep one x scale per panel; sharing the
+    # FlashMimic range makes the shorter SAC curves visually unreadable.
+    fig, axes = plt.subplots(len(ALGO_LABELS), 1, figsize=(14, 13), sharex=False)
     for axis, experiment in zip(axes, ALGO_LABELS, strict=True):
+        panel_max_minutes = 0.0
         for machine in MACHINE_LABELS:
             series = grouped.get((experiment, machine), [])
             series.sort(key=lambda item: item["wall_time_sec"])
             x = [item["wall_time_sec"] / 60.0 for item in series]
             y = _rolling_mean([item["value"] for item in series], smoothing)
+            if x:
+                panel_max_minutes = max(panel_max_minutes, max(x))
             axis.plot(
                 x,
                 y,
@@ -327,8 +333,11 @@ def _plot(rows: list[dict[str, Any]], output: Path, smoothing: int) -> None:
             )
         axis.set_title(ALGO_LABELS[experiment], loc="left")
         axis.set_ylabel("Mean reward")
+        # Start at zero and add only a small margin after the last recorded
+        # point, independently for this recipe's panel.
+        axis.set_xlim(0.0, max(1.0, panel_max_minutes * 1.05))
+        axis.set_xlabel("Wall-clock time from benchmark start (minutes)")
         axis.grid(True, alpha=0.25)
-    axes[-1].set_xlabel("End-to-end wall-clock time from benchmark start (minutes)")
     handles, labels = axes[0].get_legend_handles_labels()
     if handles:
         fig.legend(
